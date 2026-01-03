@@ -1,0 +1,44 @@
+/* Basic BBC style inspired layout and typography */
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f0f0f0;
+    color: #222;
+    margin: 0;
+    padding: 0;
+}
+
+header, footer {
+    background-color: #bb1919;
+    color: white;
+    padding: 1rem 2rem;
+}
+
+header h1, footer p {
+    margin: 0;
+}
+
+main {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+#forecast h2 {
+    border-bottom: 2px solid #bb1919;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+#forecast-data p {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 600px) {
+    main {
+        padding: 1rem;
+        margin: 0 1rem;
+    }
+}
