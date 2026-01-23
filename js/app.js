@@ -48,5 +48,31 @@ async function fetchSwellHeight() {
     }
 }
 
+async function fetchWindData() {
+  const windContainer = document.getElementById('wind-data');
+  try {
+    const response = await fetch('http://localhost:3000/api/wind');
+    const data = await response.json();
+
+    if (data.error) {
+      windContainer.innerHTML = '<p>Error loading wind data.</p>';
+      return;
+    }
+
+    windContainer.innerHTML = `
+      <p><strong>Timestamp:</strong> ${data.latestTimestamp || 'N/A'}</p>
+      <p><strong>Wind Speed:</strong> ${data.windSpeed || 'N/A'}</p>
+      <p><strong>Wind Direction:</strong> ${data.windDirection || 'N/A'} (${data.windFrom || 'N/A'})</p>
+    `;
+  } catch (error) {
+    windContainer.innerHTML = '<p>Error loading wind data.</p>';
+    console.error('Fetch wind data error:', error);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  fetchSwellHeight();
+  fetchWindData();
+});
 // Fetch data on page load
 window.addEventListener('DOMContentLoaded', fetchSwellHeight);
