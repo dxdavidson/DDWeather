@@ -36,6 +36,52 @@ main {
     font-size: 1.2rem;
 }
 
+/* Forecast day blocks */
+.forecast-day {
+    border: 1px solid #e6e6e6;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+.forecast-day h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #bb1919;
+}
+
+.forecast-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+    border-top: 1px dashed #eee;
+}
+
+.forecast-row:first-of-type {
+    border-top: none;
+}
+
+.forecast-row .label {
+    color: #555;
+    font-weight: 600;
+}
+
+.forecast-row .value {
+    color: #222;
+}
+
+/* Wind section spacing */
+#wind {
+    margin-bottom: 1rem;
+}
+
+#wind h2 {
+    border-bottom: 2px solid #bb1919;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
 @media (max-width: 600px) {
     main {
         padding: 1rem;

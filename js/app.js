@@ -31,14 +31,31 @@ async function fetchSwellHeight() {
             return { date, avg: avg.toFixed(2) };
         });
 
-        // Display swell height for today and next 7 days
+        // Display forecast for today and next 7 days — each day has Waves, Tides, Wind rows
         let html = '';
         avgDailySwell.forEach((day, index) => {
+            // Label is 'Today' for the first day, otherwise the weekday name (no date shown)
+            let label;
             if (index === 0) {
-                html += `<p><strong>Today (${day.date}):</strong> ${day.avg} m</p>`;
+                label = 'Today';
             } else {
-                html += `<p><strong>Day ${index} (${day.date}):</strong> ${day.avg} m</p>`;
+                // Convert YYYY-MM-DD to weekday name, e.g., 'Monday'
+                const weekday = new Date(day.date).toLocaleDateString(undefined, { weekday: 'long' });
+                label = weekday;
             }
+
+            const waves = `${day.avg} m`;
+            const tides = 'N/A'; // Placeholder until tidal data is added
+            const wind = 'N/A';  // Placeholder until wind forecast per day is added
+
+            html += `
+            <div class="forecast-day">
+                <h3>${label}</h3>
+                <div class="forecast-row"><span class="label"><strong>Waves:</strong></span> <span class="value">${waves}</span></div>
+                <div class="forecast-row"><span class="label"><strong>Tides:</strong></span> <span class="value">${tides}</span></div>
+                <div class="forecast-row"><span class="label"><strong>Wind:</strong></span> <span class="value">${wind}</span></div>
+            </div>
+            `;
         });
 
         forecastContainer.innerHTML = html;
