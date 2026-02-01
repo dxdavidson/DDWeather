@@ -51,14 +51,40 @@ async function fetchSwellHeight() {
             html += `
             <div class="forecast-day">
                 <h3>${label}</h3>
-                <div class="forecast-row"><span class="label"><strong>Waves:</strong></span> <span class="value">${waves}</span></div>
-                <div class="forecast-row"><span class="label"><strong>Tides:</strong></span> <span class="value">${tides}</span></div>
-                <div class="forecast-row"><span class="label"><strong>Wind:</strong></span> <span class="value">${wind}</span></div>
+                <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Waves: Maximum wave forecast for this day by marine-api.open-meteo.com.">i</button> <strong>Waves:</strong></span> <span class="value">${waves}</span></div>
+                <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Tides: Placeholder tide info (times & heights).">i</button> <strong>Tides:</strong></span> <span class="value">${tides}</span></div>
+                <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Wind: Placeholder wind info (speed, direction).">i</button> <strong>Wind:</strong></span> <span class="value">${wind}</span></div>
             </div>
             `;
         });
 
         forecastContainer.innerHTML = html;
+
+        // Attach simple event delegation for info buttons in forecast rows
+        forecastContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.info-btn');
+            if (!btn) return;
+            const text = btn.dataset.info || 'Info';
+            // Remove existing popup
+            const prev = document.querySelector('.info-popup');
+            if (prev) prev.remove();
+            const popup = document.createElement('div');
+            popup.className = 'info-popup';
+            popup.textContent = text;
+            document.body.appendChild(popup);
+            const rect = btn.getBoundingClientRect();
+            popup.style.left = `${rect.left + window.scrollX}px`;
+            popup.style.top = `${rect.bottom + window.scrollY + 8}px`;
+            // Remove popup when clicking elsewhere
+            const onDocClick = (ev) => {
+                if (!popup.contains(ev.target) && ev.target !== btn) {
+                    popup.remove();
+                    document.removeEventListener('click', onDocClick);
+                }
+            };
+            // Delay adding doc click to avoid immediate removal from same click
+            setTimeout(() => document.addEventListener('click', onDocClick), 0);
+        });
     } catch (error) {
         forecastContainer.innerHTML = '<p>Error loading swell height data.</p>';
         console.error('Fetch error:', error);
