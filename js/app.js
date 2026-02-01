@@ -51,7 +51,8 @@ async function fetchSwellHeight() {
 async function fetchWindData() {
   const windContainer = document.getElementById('wind-data');
   try {
-    const response = await fetch('http://localhost:3000/api/wind');
+    const response = await fetch('https://ddlivenbwind-production.up.railway.app/api/wind');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
 
     if (data.error) {
@@ -59,10 +60,16 @@ async function fetchWindData() {
       return;
     }
 
+    const speed = (data.windSpeed && !isNaN(parseFloat(data.windSpeed))) ? parseFloat(data.windSpeed).toFixed(1) : (data.windSpeed || 'N/A');
+    const direction = data.windDirection || 'N/A';
+    const windFrom = data.windFrom || 'N/A';
+    const ts = data.latestTimestamp || 'N/A';
+    const speedDisplay = (speed === 'N/A') ? 'N/A' : `${speed} knots`;
+
     windContainer.innerHTML = `
-      <p><strong>Timestamp:</strong> ${data.latestTimestamp || 'N/A'}</p>
-      <p><strong>Wind Speed:</strong> ${data.windSpeed || 'N/A'}</p>
-      <p><strong>Wind Direction:</strong> ${data.windDirection || 'N/A'} (${data.windFrom || 'N/A'})</p>
+      <p><strong>Timestamp:</strong> ${ts}</p>
+      <p><strong>Wind Speed:</strong> ${speedDisplay}</p>
+      <p><strong>Wind Direction:</strong> ${direction} (${windFrom})</p>
     `;
   } catch (error) {
     windContainer.innerHTML = '<p>Error loading wind data.</p>';
