@@ -39,14 +39,15 @@ async function fetchSwellHeight() {
         // Display forecast for today and next 7 days — each day has Waves, Tides, Wind rows
         let html = '';
         avgDailySwell.forEach((day, index) => {
-            // Label is 'Today' for the first day, otherwise the weekday name (no date shown)
+            // Label is 'Today' for the first day, otherwise the weekday name with date in d-mmm format
             let label;
+            const dateStr = new Date(day.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
             if (index === 0) {
-                label = 'Today';
+                label = `Today ${dateStr}`;
             } else {
                 // Convert YYYY-MM-DD to weekday name, e.g., 'Monday'
                 const weekday = new Date(day.date).toLocaleDateString(undefined, { weekday: 'long' });
-                label = weekday;
+                label = `${weekday} ${dateStr}`;
             }
 
             const waves = `${day.avg} m`;
@@ -56,40 +57,14 @@ async function fetchSwellHeight() {
             html += `
             <div class="forecast-day" data-date="${day.date}">
                 <h3>${label}</h3>
-                <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Waves: Maximum wave forecast for this day by marine-api.open-meteo.com.">i</button> <strong>Waves:</strong></span> <span class="value">${waves}</span></div>
-                <div class="forecast-row tides-row"><span class="label"><button type="button" class="info-btn" data-info="Tides: High/Low times and heights for the day.">i</button> <strong>Tides:</strong></span> <span class="value" id="tides-day-${index}">${tides}</span></div>
+                <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Waves: Maximum wave forecast for this day from marine-api.open-meteo.com.">i</button> <strong>Waves:</strong></span> <span class="value">${waves}</span></div>
+                <div class="forecast-row tides-row"><span class="label"><button type="button" class="info-btn" data-info="Tidal info for Fidra from admiraltyapi.azure-api.net. HW=High Water, LW=Low Water">i</button> <strong>Tides:</strong></span> <span class="value" id="tides-day-${index}">${tides}</span></div>
                 <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Wind: Placeholder wind info (speed, direction).">i</button> <strong>Wind:</strong></span> <span class="value">${wind}</span></div>
             </div>
             `;
         });
 
         forecastContainer.innerHTML = html; 
-
-        // Attach simple event delegation for info buttons in forecast rows
-        forecastContainer.addEventListener('click', (e) => {
-            const btn = e.target.closest('.info-btn');
-            if (!btn) return;
-            const text = btn.dataset.info || 'Info';
-            // Remove existing popup
-            const prev = document.querySelector('.info-popup');
-            if (prev) prev.remove();
-            const popup = document.createElement('div');
-            popup.className = 'info-popup';
-            popup.textContent = text;
-            document.body.appendChild(popup);
-            const rect = btn.getBoundingClientRect();
-            popup.style.left = `${rect.left + window.scrollX}px`;
-            popup.style.top = `${rect.bottom + window.scrollY + 8}px`;
-            // Remove popup when clicking elsewhere
-            const onDocClick = (ev) => {
-                if (!popup.contains(ev.target) && ev.target !== btn) {
-                    popup.remove();
-                    document.removeEventListener('click', onDocClick);
-                }
-            };
-            // Delay adding doc click to avoid immediate removal from same click
-            setTimeout(() => document.addEventListener('click', onDocClick), 0);
-        });
 
         // Now that forecast days are rendered into the DOM, fetch tide data for those dates
         fetchTideData(Array.from(document.querySelectorAll('.forecast-day')).map(el => el.dataset.date).filter(Boolean));
@@ -132,6 +107,40 @@ async function fetchWindData() {
 window.addEventListener('DOMContentLoaded', () => {
   fetchSwellHeight();
   fetchWindData();
+  
+  // Add event delegation for info buttons in the entire document
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.info-btn');
+    if (!btn) return;
+    const text = btn.dataset.info || 'Info';
+    // Remove existing popup
+    const prev = document.querySelector('.info-popup');
+    if (prev) prev.remove();
+    const popup = document.createElement('div');
+    popup.className = 'info-popup';
+    
+    // Check if text contains a URL and make it clickable
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    if (urlRegex.test(text)) {
+      popup.innerHTML = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+    } else {
+      popup.textContent = text;
+    }
+    
+    document.body.appendChild(popup);
+    const rect = btn.getBoundingClientRect();
+    popup.style.left = `${rect.left + window.scrollX}px`;
+    popup.style.top = `${rect.bottom + window.scrollY + 8}px`;
+    // Remove popup when clicking elsewhere
+    const onDocClick = (ev) => {
+      if (!popup.contains(ev.target) && ev.target !== btn) {
+        popup.remove();
+        document.removeEventListener('click', onDocClick);
+      }
+    };
+    // Delay adding doc click to avoid immediate removal from same click
+    setTimeout(() => document.addEventListener('click', onDocClick), 0);
+  });
 });
 // Fetch data on page load
 // Note: `fetchSwellHeight` will call `fetchTideData` after rendering the forecast days.
