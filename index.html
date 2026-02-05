@@ -27,6 +27,61 @@
     <footer>
         <p>© 2024 DD Rowing Weather</p>
     </footer>
+    <script>
+        (function () {
+            try {
+                const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname) || (location.port && /^55\d{2}$/.test(location.port));
+                if (!isLocal) return;
+                const url = new URL(location.href);
+                if (url.searchParams.has('wind')) return;
+                if (sessionStorage.getItem('ddweather.hideLocalPrompt')) return;
+
+                const container = document.createElement('div');
+                container.id = 'local-wind-prompt';
+                container.style = 'position:fixed;right:16px;bottom:16px;background:#fff;border:1px solid #ddd;padding:12px 14px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.12);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;z-index:10000;max-width:340px;';
+
+                container.innerHTML = `
+                    <div style="font-weight:600;margin-bottom:6px;">Use local wind server?</div>
+                    <div style="font-size:0.92em;color:#333;margin-bottom:10px;">Add <code>?wind=local</code> to the URL so the app uses your local wind server.</div>
+                `;
+
+                const btnEnable = document.createElement('button');
+                btnEnable.textContent = 'Enable Local Wind';
+                btnEnable.style = 'margin-right:8px;padding:8px 10px;border-radius:6px;border:1px solid #2b8aef;background:#2b8aef;color:#fff;cursor:pointer;';
+
+                const btnDismiss = document.createElement('button');
+                btnDismiss.textContent = 'Dismiss';
+                btnDismiss.style = 'padding:8px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;';
+
+                const chkLabel = document.createElement('label');
+                chkLabel.style = 'display:block;margin-top:10px;font-size:0.86em;color:#666;';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.style = 'margin-right:8px;';
+                chkLabel.appendChild(checkbox);
+                chkLabel.appendChild(document.createTextNode('Remember for this session'));
+
+                container.appendChild(btnEnable);
+                container.appendChild(btnDismiss);
+                container.appendChild(chkLabel);
+
+                document.body.appendChild(container);
+
+                btnEnable.addEventListener('click', () => {
+                    url.searchParams.set('wind', 'local');
+                    // use replace so history isn't cluttered
+                    window.location.replace(url.toString());
+                });
+
+                btnDismiss.addEventListener('click', () => {
+                    if (checkbox.checked) sessionStorage.setItem('ddweather.hideLocalPrompt', '1');
+                    container.remove();
+                });
+            } catch (e) {
+                console.debug('local prompt error', e);
+            }
+        })();
+    </script>
     <script src="js/app.js"></script>
 </body>
 </html>
