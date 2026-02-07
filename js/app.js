@@ -29,6 +29,14 @@ function getDirectionDegrees(dir) {
   return map[s] !== undefined ? map[s] : null;
 }
 
+function getDirectionLabel(dir) {
+  const deg = getDirectionDegrees(dir);
+  if (deg === null) return 'N/A';
+  const labels = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const idx = Math.round(deg / 22.5) % 16;
+  return labels[idx];
+}
+
 async function fetchSwellHeight() {
     const forecastContainer = document.getElementById('forecast-data');
     try {
@@ -175,7 +183,7 @@ async function fetchWeatherForecast() {
         dataByDate[dateStr][hourNum] = {
           windSpeed: windSpeeds[idx] || null,
           windDirection: windDirections[idx] || null,
-          rainProbability: rainProbs[idx] || null,
+          rainProbability: (rainProbs[idx] ?? null),
           timestamp: time
         };
       });
@@ -208,7 +216,7 @@ async function fetchWeatherForecast() {
         dataByDate[dateStr][hourNum] = {
           windSpeed: hour.windSpeed || hour.wind_speed || hour.wind || null,
           windDirection: hour.windDirection || hour.wind_direction || hour.direction || null,
-          rainProbability: hour.precipitationProbability || hour.precipitation_probability || hour.rainProbability || null,
+          rainProbability: (hour.precipitationProbability ?? hour.precipitation_probability ?? hour.rainProbability ?? null),
           timestamp: timeStr
         };
       });
@@ -260,13 +268,16 @@ async function fetchWeatherForecast() {
       hours.forEach(h => {
         const hourData = dayData[h];
         const speed = hourData && hourData.windSpeed !== null && !isNaN(parseFloat(hourData.windSpeed)) ? Math.round(parseFloat(hourData.windSpeed)) : 'N/A';
-        const direction = hourData && hourData.windDirection ? hourData.windDirection : 'N/A';
-        const rainProb = hourData && hourData.rainProbability !== null ? Math.round(hourData.rainProbability) : 'N/A';
+        const direction = hourData && hourData.windDirection ? getDirectionLabel(hourData.windDirection) : 'N/A';
+        const rainRaw = hourData ? hourData.rainProbability : null;
+        const rainProb = (rainRaw !== null && rainRaw !== undefined && !isNaN(parseFloat(rainRaw)))
+          ? Math.round(parseFloat(rainRaw))
+          : 'N/A';
 
         weatherHtml += `<div class="forecast-col" style="display:flex;flex-direction:column;align-items:center;padding:8px 6px;">`;
         weatherHtml += `<div class="hour" style="font-weight:bold;padding-bottom:6px;">${String(h).padStart(2,'0')}:00</div>`;
         // Forecast wind speed as plain text (no circle/arrow)
-        weatherHtml += `<div class="speed" style="font-weight:600;padding:4px 0;">${speed}</div>`;
+        weatherHtml += `<div class="speed" style="padding:4px 0;">${speed}</div>`;
         weatherHtml += `<div class="direction" style="padding:4px 0;margin-top:6px;font-size:0.85em;color:#444;">${direction}</div>`;
         weatherHtml += `<div class="rain" style="padding:4px 0;">${rainProb}</div>`;
         weatherHtml += `</div>`;
