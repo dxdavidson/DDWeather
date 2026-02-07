@@ -72,6 +72,34 @@ main {
     white-space: nowrap;
     text-align: left;
 }
+.forecast-row .weather-sublabels {
+    display: grid;
+    grid-template-rows: auto auto auto auto;
+    row-gap: 0;
+    margin-top: 6px;
+    padding-left: 48px;
+    transform: translateY(-20px);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #555;
+}
+.forecast-row .weather-sublabels span {
+    line-height: 1.2;
+}
+.forecast-row .weather-sublabels .weather-spacer {
+    font-weight: 700;
+    padding-bottom: 6px;
+    visibility: hidden;
+}
+.forecast-row .weather-sublabels .weather-mph {
+    padding: 4px 0;
+}
+.forecast-row .weather-sublabels .weather-direction {
+    padding: 4px 0;
+}
+.forecast-row .weather-sublabels .weather-rain {
+    padding: 4px 0;
+}
 
 .forecast-row .value {
     color: #222;

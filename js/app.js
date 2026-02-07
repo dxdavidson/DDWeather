@@ -89,7 +89,19 @@ async function fetchSwellHeight() {
                 <h3>${label}</h3>
                 <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Waves: Maximum wave forecast for this day from marine-api.open-meteo.com.">i</button> <strong>Waves:</strong></span> <span class="value">${waves}</span></div>
                 <div class="forecast-row tides-row"><span class="label"><button type="button" class="info-btn" data-info="Tidal info for Fidra from admiraltyapi.azure-api.net. HW=High Water, LW=Low Water">i</button> <strong>Tides:</strong></span> <span class="value" id="tides-day-${index}">${tides}</span></div>
-                <div class="forecast-row wind-row"><span class="label"><button type="button" class="info-btn" data-info="Forecast: Hourly wind speed, direction, and rain probability forecast.">i</button> <strong>Weather:</strong></span> <span class="value" id="wind-day-${index}">${wind}</span></div>
+                <div class="forecast-row wind-row">
+                  <span class="label">
+                    <button type="button" class="info-btn" data-info="Forecast: Hourly wind speed, direction, and rain probability forecast.">i</button>
+                    <strong>Weather:</strong>
+                    <span class="weather-sublabels">
+                      <span class="weather-spacer" aria-hidden="true">00:00</span>
+                      <span class="weather-mph">mph</span>
+                      <span class="weather-direction">Direction</span>
+                      <span class="weather-rain">Rain %</span>
+                    </span>
+                  </span>
+                  <span class="value" id="wind-day-${index}">${wind}</span>
+                </div>
             </div>
             `;
         });
