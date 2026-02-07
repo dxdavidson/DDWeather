@@ -71,6 +71,7 @@ main {
     font-weight: 600;
     white-space: nowrap;
     text-align: left;
+    position: relative;
 }
 .forecast-row .tides-sublabels {
     display: grid;
@@ -82,6 +83,7 @@ main {
     font-size: 0.95rem;
     font-weight: 600;
     color: #555;
+    pointer-events: none;
 }
 .forecast-row .tides-sublabels span {
     line-height: 1.2;
@@ -107,6 +109,7 @@ main {
     font-size: 0.95rem;
     font-weight: 600;
     color: #555;
+    pointer-events: none;
 }
 .forecast-row .weather-sublabels span {
     line-height: 1.2;
@@ -156,6 +159,8 @@ main {
     font-size: 12px;
     cursor: pointer;
     margin-right: 8px;
+    position: relative;
+    z-index: 1;
 }
 .info-btn:focus {
     outline: 2px solid #333;

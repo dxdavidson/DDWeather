@@ -102,7 +102,7 @@ async function fetchSwellHeight() {
                 </div>
                 <div class="forecast-row wind-row">
                   <span class="label">
-                    <button type="button" class="info-btn" data-info="Forecast: Hourly wind speed, direction, and rain probability forecast.">i</button>
+                    <button type="button" class="info-btn" data-info="Weather: Hourly wind speed, direction, and rain probability forecast from api.open-meteo.com">i</button>
                     <strong>Weather:</strong>
                     <span class="weather-sublabels">
                       <span class="weather-spacer" aria-hidden="true">00:00</span>
