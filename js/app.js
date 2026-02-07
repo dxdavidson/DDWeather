@@ -2,10 +2,32 @@
 const LATITUDE = 51.3; // Example: North Berwick latitude
 const LONGITUDE = -2.7; // Example: North Berwick longitude
 
-// Wind API selection: default is 'railway'.
+// API Base URL selection: default is 'railway'
 // Switch to local proxy by adding ?wind=local to the page URL or by setting window.WIND_API_ENV = 'local'.
 const WIND_API_ENV = (new URLSearchParams(window.location.search).get('wind')) || (window.WIND_API_ENV) || 'railway';
-const WIND_API_URL = WIND_API_ENV === 'local' ? 'http://localhost:3000/api/wind' : 'https://ddlivenbwind-production.up.railway.app/api/wind';
+const API_BASE_URL = WIND_API_ENV === 'local' ? 'http://localhost:3000' : 'https://ddlivenbwind-production.up.railway.app';
+
+// API endpoint suffixes
+const ENDPOINTS = {
+  livewind: '/api/livewind',
+  weatherforecast: '/api/weatherforecast',
+  tides: '/api/tides'
+};
+
+// Convert wind direction (cardinal string or degrees) to numeric degrees
+function getDirectionDegrees(dir) {
+  if (dir === null || dir === undefined) return null;
+  const n = parseFloat(String(dir));
+  if (!isNaN(n)) return n;
+  const s = String(dir).trim().toUpperCase();
+  const map = {
+    N: 0, NNE: 22.5, NE: 45, ENE: 67.5,
+    E: 90, ESE: 112.5, SE: 135, SSE: 157.5,
+    S: 180, SSW: 202.5, SW: 225, WSW: 247.5,
+    W: 270, WNW: 292.5, NW: 315, NNW: 337.5
+  };
+  return map[s] !== undefined ? map[s] : null;
+}
 
 async function fetchSwellHeight() {
     const forecastContainer = document.getElementById('forecast-data');
@@ -52,14 +74,14 @@ async function fetchSwellHeight() {
 
             const waves = `${day.avg} m`;
             const tides = 'Loading...'; // Will be populated by fetchTideData
-            const wind = 'N/A';  // Placeholder until wind forecast per day is added
+            const wind = 'Loading...';  // Will be populated by fetchWeatherForecast
 
             html += `
             <div class="forecast-day" data-date="${day.date}">
                 <h3>${label}</h3>
                 <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Waves: Maximum wave forecast for this day from marine-api.open-meteo.com.">i</button> <strong>Waves:</strong></span> <span class="value">${waves}</span></div>
                 <div class="forecast-row tides-row"><span class="label"><button type="button" class="info-btn" data-info="Tidal info for Fidra from admiraltyapi.azure-api.net. HW=High Water, LW=Low Water">i</button> <strong>Tides:</strong></span> <span class="value" id="tides-day-${index}">${tides}</span></div>
-                <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Wind: Placeholder wind info (speed, direction).">i</button> <strong>Wind:</strong></span> <span class="value">${wind}</span></div>
+                <div class="forecast-row wind-row"><span class="label"><button type="button" class="info-btn" data-info="Forecast: Hourly wind speed, direction, and rain probability forecast.">i</button> <strong>Forecast:</strong></span> <span class="value" id="wind-day-${index}">${wind}</span></div>
             </div>
             `;
         });
@@ -77,6 +99,7 @@ async function fetchSwellHeight() {
 async function fetchWindData() {
   const windContainer = document.getElementById('wind-data');
   try {
+    const WIND_API_URL = API_BASE_URL + ENDPOINTS.livewind;
     console.debug('Using wind API:', WIND_API_URL);
     const response = await fetch(WIND_API_URL);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -87,16 +110,29 @@ async function fetchWindData() {
       return;
     }
 
-    const speed = (data.windSpeed && !isNaN(parseFloat(data.windSpeed))) ? parseFloat(data.windSpeed).toFixed(1) : (data.windSpeed || 'N/A');
-    const direction = data.windDirection || 'N/A';
+    const speed = (data.windSpeed && !isNaN(parseFloat(data.windSpeed))) ? Math.round(parseFloat(data.windSpeed)) : (data.windSpeed || 'N/A');
+    const direction = data.windDirection || data.wind_direction || 'N/A';
     const windFrom = data.windFrom || 'N/A';
-    const ts = data.latestTimestamp || 'N/A';
-    const speedDisplay = (speed === 'N/A') ? 'N/A' : `${speed} knots`;
+    const ts = data.latestTimestamp || data.timestamp || 'N/A';
+
+    // compute rotation: convert meteorological 'from' degrees to arrow pointing 'to' direction
+    let dirDeg = getDirectionDegrees(direction);
+    // wind_to = (wind_from + 180) % 360; rotate arrow (default up/north) by wind_to degrees
+    let rotation = (dirDeg === null) ? 0 : ((dirDeg + 180) % 360);
+    const speedDisplay = (speed === 'N/A') ? 'N/A' : `${speed}`;
 
     windContainer.innerHTML = `
       <p><strong>Timestamp:</strong> ${ts}</p>
-      <p><strong>Wind Speed:</strong> ${speedDisplay}</p>
-      <p><strong>Wind Direction:</strong> ${direction} (${windFrom})</p>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
+        <div class="wind-circle" title="${direction}">
+          <div class="wind-speed">${speedDisplay}</div>
+          <div class="wind-arrow" style="transform:rotate(${rotation}deg);"></div>
+        </div>
+        <div>
+          <p style="margin:0;"><strong>Wind:</strong> ${speed === 'N/A' ? 'N/A' : speed + ' knots'}</p>
+          <p style="margin:0;color:#555;">Direction: ${direction} (${windFrom})</p>
+        </div>
+      </div>
     `;
   } catch (error) {
     windContainer.innerHTML = '<p>Error loading wind data.</p>';
@@ -104,9 +140,154 @@ async function fetchWindData() {
   }
 }
 
+async function fetchWeatherForecast() {
+  try {
+    const WEATHER_API_URL = API_BASE_URL + ENDPOINTS.weatherforecast;
+    console.debug('Using weather API:', WEATHER_API_URL);
+    const response = await fetch(WEATHER_API_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    console.debug('Weather forecast data received:', data);
+
+    if (data.error) {
+      console.error('Weather API error:', data.error);
+      return;
+    }
+
+    // Get today's date and forecast dates
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const forecastDates = Array.from(document.querySelectorAll('.forecast-day')).map(el => el.dataset.date).filter(Boolean);
+
+    // Process data structure - handle both array format and open-meteo format
+    // Format 1: { hourly: { time: [...], wind_speed_10m: [...], wind_direction_10m: [...], precipitation_probability: [...] } }
+    // Format 2: { hourly: [...] } or { data: [...] } or { days: [...] }
+    let dataByDate = {};
+    
+    if (data.hourly && data.hourly.time && Array.isArray(data.hourly.time)) {
+      // Open-meteo style format with time array and parallel data arrays
+      const times = data.hourly.time;
+      const windSpeeds = data.hourly.wind_speed_10m || data.hourly.windSpeed || data.hourly.wind_speed || [];
+      const windDirections = data.hourly.wind_direction_10m || data.hourly.windDirection || data.hourly.wind_direction || [];
+      const rainProbs = data.hourly.precipitation_probability || data.hourly.precipitationProbability || [];
+      
+      times.forEach((time, idx) => {
+        const dateStr = new Date(time).toISOString().split('T')[0];
+        const hourNum = new Date(time).getHours();
+        if (!dataByDate[dateStr]) dataByDate[dateStr] = {};
+        dataByDate[dateStr][hourNum] = {
+          windSpeed: windSpeeds[idx] || null,
+          windDirection: windDirections[idx] || null,
+          rainProbability: rainProbs[idx] || null,
+          timestamp: time
+        };
+      });
+    } else {
+      // Array format where each element is an hour object
+      let hourlyData = [];
+      
+      if (Array.isArray(data.hourly)) {
+        hourlyData = data.hourly;
+      } else if (Array.isArray(data.data)) {
+        hourlyData = data.data;
+      } else if (data.days && Array.isArray(data.days)) {
+        // Flatten nested hourly data from days
+        data.days.forEach(day => {
+          if (Array.isArray(day.hours)) {
+            hourlyData = hourlyData.concat(day.hours);
+          } else if (Array.isArray(day.hourly)) {
+            hourlyData = hourlyData.concat(day.hourly);
+          }
+        });
+      }
+
+      // Group hourly data by date
+      hourlyData.forEach(hour => {
+        const timeStr = hour.timestamp || hour.time || hour.datetime;
+        if (!timeStr) return;
+        const dateStr = new Date(timeStr).toISOString().split('T')[0];
+        const hourNum = new Date(timeStr).getHours();
+        if (!dataByDate[dateStr]) dataByDate[dateStr] = {};
+        dataByDate[dateStr][hourNum] = {
+          windSpeed: hour.windSpeed || hour.wind_speed || hour.wind || null,
+          windDirection: hour.windDirection || hour.wind_direction || hour.direction || null,
+          rainProbability: hour.precipitationProbability || hour.precipitation_probability || hour.rainProbability || null,
+          timestamp: timeStr
+        };
+      });
+    }
+
+    // Populate wind rows for each forecast day
+    forecastDates.slice(0, 7).forEach((date, dayIdx) => {
+      const windEl = document.getElementById(`wind-day-${dayIdx}`);
+      if (!windEl) return;
+      
+      const isToday = date === todayStr;
+      let startHour, endHour;
+      const LAST_HOUR = 19; // last column should be 19:00
+      const LAST_HOUR_EXCLUSIVE = LAST_HOUR + 1; // loop upper bound
+
+      if (isToday) {
+        // Today: from next hour up to LAST_HOUR (19:00)
+        const now = new Date();
+        startHour = now.getHours() + 1; // Next hour
+        if (startHour > LAST_HOUR) {
+          // Nothing to show
+          startHour = 0;
+          endHour = 0;
+        } else {
+          endHour = LAST_HOUR_EXCLUSIVE;
+        }
+      } else {
+        // Other days: from 07:00 to LAST_HOUR (19:00)
+        startHour = 7;
+        endHour = LAST_HOUR_EXCLUSIVE;
+      }
+
+      const dayData = dataByDate[date] || {};
+      const hours = [];
+      
+      for (let h = startHour; h < endHour; h++) {
+        hours.push(h);
+      }
+
+      // Only show if there's data for this day or it's within forecast range
+      if (hours.length === 0) {
+        windEl.textContent = 'N/A';
+        return;
+      }
+
+      // Build weather grid as column-based layout so we can shade alternate columns
+      let weatherHtml = `<div class="forecast-grid" style="display: grid; grid-template-columns: repeat(${hours.length}, 1fr); gap: 0; font-size: 0.85em;">`;
+
+      hours.forEach(h => {
+        const hourData = dayData[h];
+        const speed = hourData && hourData.windSpeed !== null && !isNaN(parseFloat(hourData.windSpeed)) ? Math.round(parseFloat(hourData.windSpeed)) : 'N/A';
+        const direction = hourData && hourData.windDirection ? hourData.windDirection : 'N/A';
+        const rainProb = hourData && hourData.rainProbability !== null ? Math.round(hourData.rainProbability) : 'N/A';
+
+        weatherHtml += `<div class="forecast-col" style="display:flex;flex-direction:column;align-items:center;padding:8px 6px;">`;
+        weatherHtml += `<div class="hour" style="font-weight:bold;padding-bottom:6px;">${String(h).padStart(2,'0')}:00</div>`;
+        // Forecast wind speed as plain text (no circle/arrow)
+        weatherHtml += `<div class="speed" style="font-weight:600;padding:4px 0;">${speed}</div>`;
+        weatherHtml += `<div class="direction" style="padding:4px 0;margin-top:6px;font-size:0.85em;color:#444;">${direction}</div>`;
+        weatherHtml += `<div class="rain" style="padding:4px 0;">${rainProb}</div>`;
+        weatherHtml += `</div>`;
+      });
+
+      weatherHtml += `</div>`; // Close grid
+      windEl.innerHTML = weatherHtml;
+    });
+
+  } catch (error) {
+    console.error('Fetch weather data error:', error);
+  }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   fetchSwellHeight();
   fetchWindData();
+  fetchWeatherForecast();
   
   // Add event delegation for info buttons in the entire document
   document.addEventListener('click', (e) => {
@@ -146,16 +327,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // Note: `fetchSwellHeight` will call `fetchTideData` after rendering the forecast days.
 
 async function fetchTideData(dates = null) {
-  // Derive tides endpoint from WIND_API_URL by replacing the last /api/wind path with /api/tides
-  const TIDES_API_URL = (() => {
-    try {
-      const u = new URL(WIND_API_URL);
-      u.pathname = u.pathname.replace(/\/api\/wind$/, '/api/tides');
-      return u.toString();
-    } catch (e) {
-      return WIND_API_URL.replace('/api/wind', '/api/tides');
-    }
-  })();
+  const TIDES_API_URL = API_BASE_URL + ENDPOINTS.tides;
 
   try {
     console.debug('Fetching tides from:', TIDES_API_URL);

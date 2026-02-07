@@ -52,10 +52,13 @@ main {
 }
 
 .forecast-row {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    /* Fixed label column width based on longest label ("Forecast:") */
+    grid-template-columns: 9rem 1fr;
+    gap: 1rem;
     padding: 0.25rem 0;
     border-top: 1px dashed #eee;
+    align-items: start;
 }
 
 .forecast-row:first-of-type {
@@ -65,10 +68,24 @@ main {
 .forecast-row .label {
     color: #555;
     font-weight: 600;
+    white-space: nowrap;
+    text-align: left;
 }
 
 .forecast-row .value {
     color: #222;
+    text-align: left;
+}
+
+/* Ensure all numeric forecast values use the same font size and weight
+   This normalizes wave heights, wind speeds and rain probabilities so
+   they appear visually consistent and aligned. */
+.forecast-row .value,
+.forecast-row .value * {
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 400;
+    line-height: 1.2;
 }
 
 /* Info button and popup */
@@ -104,6 +121,63 @@ main {
 /* Wind section spacing */
 #wind {
     margin-bottom: 1rem;
+}
+
+/* Forecast grid columns - alternate column shading for readability */
+.forecast-grid {
+    border-radius: 4px;
+    overflow: hidden;
+}
+.forecast-grid .forecast-col {
+    padding: 6px 8px;
+}
+.forecast-grid .forecast-col:nth-child(odd) {
+    background: rgba(0,0,0,0.03);
+}
+.forecast-grid .hour {
+    font-weight: 700;
+}
+.forecast-grid .speed, .forecast-grid .direction, .forecast-grid .rain {
+    font-size: 0.95rem;
+}
+
+/* Wind circle and arrow (used for live wind and forecast columns) */
+.wind-circle {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.wind-circle .wind-speed {
+    z-index: 2;
+}
+.wind-circle .wind-arrow {
+    position: absolute;
+    left: 50%;
+    top: -18px;
+    width: 2px;
+    height: 24px;
+    background: #111;
+    transform-origin: 50% 100%;
+    z-index: 1;
+}
+.wind-circle .wind-arrow:after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -8px;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 7px solid #111;
 }
 
 #wind h2 {
