@@ -115,23 +115,11 @@ async function fetchWindData() {
     const windFrom = data.windFrom || 'N/A';
     const ts = data.latestTimestamp || data.timestamp || 'N/A';
 
-    // compute rotation: convert meteorological 'from' degrees to arrow pointing 'to' direction
-    let dirDeg = getDirectionDegrees(direction);
-    // wind_to = (wind_from + 180) % 360; rotate arrow (default up/north) by wind_to degrees
-    let rotation = (dirDeg === null) ? 0 : ((dirDeg + 180) % 360);
-    const speedDisplay = (speed === 'N/A') ? 'N/A' : `${speed}`;
-
     windContainer.innerHTML = `
       <p><strong>Timestamp:</strong> ${ts}</p>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
-        <div class="wind-circle" title="${direction}">
-          <div class="wind-speed">${speedDisplay}</div>
-          <div class="wind-arrow" style="transform:rotate(${rotation}deg);"></div>
-        </div>
-        <div>
-          <p style="margin:0;"><strong>Wind:</strong> ${speed === 'N/A' ? 'N/A' : speed + ' knots'}</p>
-          <p style="margin:0;color:#555;">Direction: ${direction} (${windFrom})</p>
-        </div>
+      <div style="margin-top:6px;">
+        <p style="margin:0;"><strong>Wind:</strong> ${speed === 'N/A' ? 'N/A' : speed + ' knots'}</p>
+        <p style="margin:0;color:#555;">Direction: ${direction} (${windFrom})</p>
       </div>
     `;
   } catch (error) {
