@@ -116,10 +116,19 @@ async function fetchWindData() {
     const ts = data.latestTimestamp || data.timestamp || 'N/A';
 
     windContainer.innerHTML = `
-      <p><strong>Timestamp:</strong> ${ts}</p>
-      <div style="margin-top:6px;">
-        <p style="margin:0;"><strong>Wind:</strong> ${speed === 'N/A' ? 'N/A' : speed + ' knots'}</p>
-        <p style="margin:0;color:#555;">Direction: ${direction} (${windFrom})</p>
+      <div class="live-wind-lines">
+        <div class="live-wind-line">
+          <span class="label">Timestamp:</span>
+          <span class="live-wind-value">${ts}</span>
+        </div>
+        <div class="live-wind-line">
+          <span class="label">Wind:</span>
+          <span class="live-wind-value">${speed === 'N/A' ? 'N/A' : speed + ' knots'}</span>
+        </div>
+        <div class="live-wind-line">
+          <span class="label">Direction:</span>
+          <span class="live-wind-value">${direction} (${windFrom})</span>
+        </div>
       </div>
     `;
   } catch (error) {

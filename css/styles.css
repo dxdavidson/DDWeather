@@ -65,7 +65,8 @@ main {
     border-top: none;
 }
 
-.forecast-row .label {
+.forecast-row .label,
+.label {
     color: #555;
     font-weight: 600;
     white-space: nowrap;
@@ -121,6 +122,23 @@ main {
 /* Wind section spacing */
 #wind {
     margin-bottom: 1rem;
+}
+
+/* Live wind lines layout */
+#wind-data .live-wind-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+#wind-data .live-wind-line {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+#wind-data .live-wind-value {
+    text-align: left;
+    color: #222;
 }
 
 /* Forecast grid columns - alternate column shading for readability */
