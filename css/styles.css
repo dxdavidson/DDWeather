@@ -54,7 +54,7 @@ main {
 .forecast-row {
     display: grid;
     /* Fixed label column width based on longest label ("Forecast:") */
-    grid-template-columns: 9rem 1fr;
+    grid-template-columns: 10rem 1fr;
     gap: 1rem;
     padding: 0.25rem 0;
     border-top: 1px dashed #eee;
@@ -71,6 +71,31 @@ main {
     font-weight: 600;
     white-space: nowrap;
     text-align: left;
+}
+.forecast-row .tides-sublabels {
+    display: grid;
+    grid-template-rows: auto auto auto;
+    row-gap: 0;
+    margin-top: 6px;
+    padding-left: 48px;
+    transform: translateY(-30px);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #555;
+}
+.forecast-row .tides-sublabels span {
+    line-height: 1.2;
+}
+.forecast-row .tides-sublabels .tides-spacer {
+    font-weight: 700;
+    padding-bottom: 6px;
+    visibility: hidden;
+}
+.forecast-row .tides-sublabels .tides-time {
+    padding: 4px 0;
+}
+.forecast-row .tides-sublabels .tides-metres {
+    padding: 4px 0;
 }
 .forecast-row .weather-sublabels {
     display: grid;
