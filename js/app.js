@@ -432,7 +432,7 @@ async function fetchTideData(dates = null) {
       while (parts.length < 4) parts.push({ type: 'N/A', time: 'N/A', height: 'N/A' });
       
       const tideHtml = `
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 0.9em;">
+        <div style="display: grid; grid-template-columns: repeat(4, 100px); gap: 8px; font-size: 0.9em;">
           <div>${parts[0].type}</div>
           <div>${parts[1].type}</div>
           <div>${parts[2].type}</div>
