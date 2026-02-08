@@ -11,7 +11,8 @@ const API_BASE_URL = WIND_API_ENV === 'local' ? 'http://localhost:3000' : 'https
 const ENDPOINTS = {
   livewind: '/api/livewind',
   weatherforecast: '/api/weatherforecast',
-  tides: '/api/tides'
+  tides: '/api/tides',
+  waves: '/api/waves'
 };
 
 // Convert wind direction (cardinal string or degrees) to numeric degrees
@@ -40,9 +41,8 @@ function getDirectionLabel(dir) {
 async function fetchSwellHeight() {
     const forecastContainer = document.getElementById('forecast-data');
     try {
-        //const response = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${LATITUDE}&longitude=${LONGITUDE}&hourly=swell_height&forecast_days=7`);
-        //https://marine-api.open-meteo.com/v1/marine?latitude=56.06&longitude=-2.7&daily=wave_height_max&timezone=Europe%2FLondon
-        const response = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=56.06&longitude=-2.7&daily=wave_height_max&timezone=Europe%2FLondon`);
+    const WAVES_API_URL = API_BASE_URL + ENDPOINTS.waves;
+    const response = await fetch(WAVES_API_URL);
         const data = await response.json();
 
         // Extract swell height data for today and next 7 days
