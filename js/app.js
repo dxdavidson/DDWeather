@@ -286,7 +286,7 @@ async function fetchWeatherForecast() {
       }
 
       // Build weather grid as column-based layout so we can shade alternate columns
-      let weatherHtml = `<div class="forecast-grid" style="display: grid; grid-template-columns: repeat(${hours.length}, 1fr); gap: 0; font-size: 0.85em;">`;
+      let weatherHtml = `<div class="forecast-grid" style="display: grid; grid-template-columns: repeat(${hours.length}, 80px); gap: 0; font-size: 0.85em;">`;
 
       hours.forEach(h => {
         const hourData = dayData[h];
@@ -432,7 +432,7 @@ async function fetchTideData(dates = null) {
       while (parts.length < 4) parts.push({ type: 'N/A', time: 'N/A', height: 'N/A' });
       
       const tideHtml = `
-        <div style="display: grid; grid-template-columns: repeat(4, 100px); gap: 8px; font-size: 0.9em;">
+        <div class="tide-grid" style="display: grid; grid-template-columns: repeat(4, 80px); gap: 0; font-size: 0.9em;">
           <div>${parts[0].type}</div>
           <div>${parts[1].type}</div>
           <div>${parts[2].type}</div>

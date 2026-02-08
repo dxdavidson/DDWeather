@@ -217,6 +217,16 @@ main {
     font-size: 0.95rem;
 }
 
+/* Tides grid column striping (odd columns shaded) */
+.tide-grid > :nth-child(4n+1),
+.tide-grid > :nth-child(4n+3) {
+    background: rgba(0,0,0,0.03);
+}
+.tide-grid > * {
+    padding: 2px 4px;
+    border-radius: 2px;
+}
+
 /* Wind circle and arrow (used for live wind and forecast columns) */
 .wind-circle {
     position: relative;
