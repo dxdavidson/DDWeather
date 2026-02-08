@@ -252,7 +252,7 @@ async function fetchWeatherForecast() {
       
       const isToday = date === todayStr;
       let startHour, endHour;
-      const LAST_HOUR = 19; // last column should be 19:00
+      const LAST_HOUR = 23; // last column should be 19:00
       const LAST_HOUR_EXCLUSIVE = LAST_HOUR + 1; // loop upper bound
 
       if (isToday) {
