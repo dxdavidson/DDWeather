@@ -188,6 +188,12 @@ main {
     flex-direction: column;
     gap: 6px;
 }
+#wind-data .live-wind-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 74px;
+    flex-wrap: wrap;
+}
 #wind-data .live-wind-line {
     display: grid;
     grid-template-columns: 9rem 1fr;
@@ -197,6 +203,26 @@ main {
 #wind-data .live-wind-value {
     text-align: left;
     color: #222;
+}
+#wind-data .wind-stats-table {
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    min-width: 240px;
+}
+#wind-data .wind-stats-table th,
+#wind-data .wind-stats-table td {
+    border: 1px solid #e0e0e0;
+    padding: 6px 10px;
+    text-align: center;
+}
+#wind-data .wind-stats-table th[scope="row"] {
+    text-align: left;
+    font-weight: 600;
+    color: #444;
+}
+#wind-data .wind-stats-table thead th {
+    background: #f7f7f7;
+    font-weight: 700;
 }
 
 /* Forecast grid columns - alternate column shading for readability */

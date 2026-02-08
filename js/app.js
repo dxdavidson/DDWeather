@@ -146,20 +146,56 @@ async function fetchWindData() {
     const windFrom = data.windFrom || 'N/A';
     const ts = data.latestTimestamp || data.timestamp || 'N/A';
 
+    const intervalRows = ['5', '30', '60'];
+    const stats = Array.isArray(data.meanMaxByInterval) ? data.meanMaxByInterval : [];
+    const statsByInterval = new Map(stats.map(item => [String(item.intervalMinutes), item]));
+
+    const buildCell = (interval, key) => {
+      const row = statsByInterval.get(interval);
+      if (!row || row[key] === undefined || row[key] === null || row[key] === '') return 'N/A';
+      return String(row[key]);
+    };
+
+    const statsTableHtml = `
+      <table class="wind-stats-table" aria-label="Wind speed stats">
+        <thead>
+          <tr>
+            <th scope="col">Knots</th>
+            <th scope="col">Min</th>
+            <th scope="col">Mean</th>
+            <th scope="col">Max</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${intervalRows.map(interval => `
+            <tr>
+              <th scope="row">${interval} mins</th>
+              <td>${buildCell(interval, 'min')}</td>
+              <td>${buildCell(interval, 'mean')}</td>
+              <td>${buildCell(interval, 'max')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
     windContainer.innerHTML = `
-      <div class="live-wind-lines">
-        <div class="live-wind-line">
-          <span class="label">Timestamp:</span>
-          <span class="live-wind-value">${ts}</span>
+      <div class="live-wind-layout">
+        <div class="live-wind-lines">
+          <div class="live-wind-line">
+            <span class="label">Timestamp:</span>
+            <span class="live-wind-value">${ts}</span>
+          </div>
+          <div class="live-wind-line">
+            <span class="label">Wind:</span>
+            <span class="live-wind-value">${speed === 'N/A' ? 'N/A' : speed + ' knots'}</span>
+          </div>
+          <div class="live-wind-line">
+            <span class="label">Direction:</span>
+            <span class="live-wind-value">${direction} (${windFrom})</span>
+          </div>
         </div>
-        <div class="live-wind-line">
-          <span class="label">Wind:</span>
-          <span class="live-wind-value">${speed === 'N/A' ? 'N/A' : speed + ' knots'}</span>
-        </div>
-        <div class="live-wind-line">
-          <span class="label">Direction:</span>
-          <span class="live-wind-value">${direction} (${windFrom})</span>
-        </div>
+        ${statsTableHtml}
       </div>
     `;
   } catch (error) {
