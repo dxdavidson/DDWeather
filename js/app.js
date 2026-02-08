@@ -315,8 +315,8 @@ async function fetchWeatherForecast() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  fetchSwellHeight();
+window.addEventListener('DOMContentLoaded', async () => {
+  await fetchSwellHeight();
   fetchWindData();
   fetchWeatherForecast();
   
