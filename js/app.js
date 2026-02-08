@@ -38,6 +38,56 @@ function getDirectionLabel(dir) {
   return labels[idx];
 }
 
+const clearElement = (element) => {
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
+  }
+};
+
+const createEl = (tag, options = {}) => {
+  const el = document.createElement(tag);
+  if (options.className) el.className = options.className;
+  if (options.text !== undefined) el.textContent = options.text;
+  if (options.attrs) {
+    Object.entries(options.attrs).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        el.setAttribute(key, String(value));
+      }
+    });
+  }
+  if (options.style) {
+    Object.assign(el.style, options.style);
+  }
+  return el;
+};
+
+const appendTextWithLinks = (container, text) => {
+  const urlRegex = /https?:\/\/[^\s]+/g;
+  const str = String(text || '');
+  let lastIndex = 0;
+  for (const match of str.matchAll(urlRegex)) {
+    const url = match[0];
+    const idx = match.index ?? 0;
+    if (idx > lastIndex) {
+      container.appendChild(document.createTextNode(str.slice(lastIndex, idx)));
+    }
+    const link = document.createElement('a');
+    try {
+      link.href = new URL(url).toString();
+    } catch (e) {
+      link.href = url;
+    }
+    link.textContent = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    container.appendChild(link);
+    lastIndex = idx + url.length;
+  }
+  if (lastIndex < str.length) {
+    container.appendChild(document.createTextNode(str.slice(lastIndex)));
+  }
+};
+
 async function fetchSwellHeight() {
     const forecastContainer = document.getElementById('forecast-data');
     try {
@@ -67,7 +117,7 @@ async function fetchSwellHeight() {
         });
 
         // Display forecast for today and next 7 days — each day has Waves, Tides, Wind rows
-        let html = '';
+        const fragment = document.createDocumentFragment();
         avgDailySwell.forEach((day, index) => {
             // Label is 'Today' for the first day, otherwise the weekday name with date in d-mmm format
             let label;
@@ -84,45 +134,82 @@ async function fetchSwellHeight() {
             const tides = 'Loading...'; // Will be populated by fetchTideData
             const wind = 'Loading...';  // Will be populated by fetchWeatherForecast
 
-            html += `
-            <div class="forecast-day" data-date="${day.date}">
-                <h3>${label}</h3>
-                <div class="forecast-row"><span class="label"><button type="button" class="info-btn" data-info="Waves: Maximum wave forecast for this day from marine-api.open-meteo.com.">i</button> <strong>Waves:</strong></span> <span class="value">${waves}</span></div>
-                <div class="forecast-row tides-row">
-                  <span class="label">
-                    <button type="button" class="info-btn" data-info="Tidal info for Fidra from admiraltyapi.azure-api.net. HW=High Water, LW=Low Water">i</button>
-                    <strong>Tides:</strong>
-                    <span class="tides-sublabels">
-                      <span class="tides-spacer" aria-hidden="true">HW</span>
-                      <span class="tides-time">Time</span>
-                      <span class="tides-metres">metres</span>
-                    </span>
-                  </span>
-                  <span class="value" id="tides-day-${index}">${tides}</span>
-                </div>
-                <div class="forecast-row wind-row">
-                  <span class="label">
-                    <button type="button" class="info-btn" data-info="Weather: Hourly wind speed, direction, and rain probability forecast from api.open-meteo.com">i</button>
-                    <strong>Weather:</strong>
-                    <span class="weather-sublabels">
-                      <span class="weather-spacer" aria-hidden="true">00:00</span>
-                      <span class="weather-mph">mph</span>
-                      <span class="weather-direction">Direction</span>
-                      <span class="weather-rain">Rain %</span>
-                    </span>
-                  </span>
-                  <span class="value" id="wind-day-${index}">${wind}</span>
-                </div>
-            </div>
-            `;
+            const dayEl = createEl('div', { className: 'forecast-day', attrs: { 'data-date': day.date } });
+            dayEl.appendChild(createEl('h3', { text: label }));
+
+            const wavesRow = createEl('div', { className: 'forecast-row' });
+            const wavesLabel = createEl('span', { className: 'label' });
+            const wavesBtn = createEl('button', {
+              className: 'info-btn',
+              text: 'i',
+              attrs: {
+                type: 'button',
+                'data-info': 'Waves: Maximum wave forecast for this day from marine-api.open-meteo.com.'
+              }
+            });
+            wavesLabel.appendChild(wavesBtn);
+            wavesLabel.appendChild(document.createTextNode(' '));
+            wavesLabel.appendChild(createEl('strong', { text: 'Waves:' }));
+            wavesRow.appendChild(wavesLabel);
+            wavesRow.appendChild(createEl('span', { className: 'value', text: waves }));
+            dayEl.appendChild(wavesRow);
+
+            const tidesRow = createEl('div', { className: 'forecast-row tides-row' });
+            const tidesLabel = createEl('span', { className: 'label' });
+            const tidesBtn = createEl('button', {
+              className: 'info-btn',
+              text: 'i',
+              attrs: {
+                type: 'button',
+                'data-info': 'Tidal info for Fidra from admiraltyapi.azure-api.net. HW=High Water, LW=Low Water'
+              }
+            });
+            tidesLabel.appendChild(tidesBtn);
+            tidesLabel.appendChild(document.createTextNode(' '));
+            tidesLabel.appendChild(createEl('strong', { text: 'Tides:' }));
+            const tidesSublabels = createEl('span', { className: 'tides-sublabels' });
+            tidesSublabels.appendChild(createEl('span', { className: 'tides-spacer', text: 'HW', attrs: { 'aria-hidden': 'true' } }));
+            tidesSublabels.appendChild(createEl('span', { className: 'tides-time', text: 'Time' }));
+            tidesSublabels.appendChild(createEl('span', { className: 'tides-metres', text: 'metres' }));
+            tidesLabel.appendChild(tidesSublabels);
+            tidesRow.appendChild(tidesLabel);
+            tidesRow.appendChild(createEl('span', { className: 'value', text: tides, attrs: { id: `tides-day-${index}` } }));
+            dayEl.appendChild(tidesRow);
+
+            const windRow = createEl('div', { className: 'forecast-row wind-row' });
+            const windLabel = createEl('span', { className: 'label' });
+            const windBtn = createEl('button', {
+              className: 'info-btn',
+              text: 'i',
+              attrs: {
+                type: 'button',
+                'data-info': 'Weather: Hourly wind speed, direction, and rain probability forecast from api.open-meteo.com'
+              }
+            });
+            windLabel.appendChild(windBtn);
+            windLabel.appendChild(document.createTextNode(' '));
+            windLabel.appendChild(createEl('strong', { text: 'Weather:' }));
+            const weatherSublabels = createEl('span', { className: 'weather-sublabels' });
+            weatherSublabels.appendChild(createEl('span', { className: 'weather-spacer', text: '00:00', attrs: { 'aria-hidden': 'true' } }));
+            weatherSublabels.appendChild(createEl('span', { className: 'weather-mph', text: 'mph' }));
+            weatherSublabels.appendChild(createEl('span', { className: 'weather-direction', text: 'Direction' }));
+            weatherSublabels.appendChild(createEl('span', { className: 'weather-rain', text: 'Rain %' }));
+            windLabel.appendChild(weatherSublabels);
+            windRow.appendChild(windLabel);
+            windRow.appendChild(createEl('span', { className: 'value', text: wind, attrs: { id: `wind-day-${index}` } }));
+            dayEl.appendChild(windRow);
+
+            fragment.appendChild(dayEl);
         });
 
-        forecastContainer.innerHTML = html; 
+        clearElement(forecastContainer);
+        forecastContainer.appendChild(fragment);
 
         // Now that forecast days are rendered into the DOM, fetch tide data for those dates
         fetchTideData(Array.from(document.querySelectorAll('.forecast-day')).map(el => el.dataset.date).filter(Boolean));
     } catch (error) {
-        forecastContainer.innerHTML = '<p>Error loading swell height data.</p>';
+        clearElement(forecastContainer);
+        forecastContainer.appendChild(createEl('p', { text: 'Error loading swell height data.' }));
         console.error('Fetch error:', error);
     }
 }
@@ -137,7 +224,8 @@ async function fetchWindData() {
     const data = await response.json();
 
     if (data.error) {
-      windContainer.innerHTML = '<p>Error loading wind data.</p>';
+      clearElement(windContainer);
+      windContainer.appendChild(createEl('p', { text: 'Error loading wind data.' }));
       return;
     }
 
@@ -156,50 +244,46 @@ async function fetchWindData() {
       return String(row[key]);
     };
 
-    const statsTableHtml = `
-      <table class="wind-stats-table" aria-label="Wind speed stats">
-        <thead>
-          <tr>
-            <th scope="col">Knots</th>
-            <th scope="col">Min</th>
-            <th scope="col">Mean</th>
-            <th scope="col">Max</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${intervalRows.map(interval => `
-            <tr>
-              <th scope="row">${interval} mins</th>
-              <td>${buildCell(interval, 'min')}</td>
-              <td>${buildCell(interval, 'mean')}</td>
-              <td>${buildCell(interval, 'max')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
+    const statsTable = createEl('table', { className: 'wind-stats-table', attrs: { 'aria-label': 'Wind speed stats' } });
+    const thead = createEl('thead');
+    const headRow = createEl('tr');
+    headRow.appendChild(createEl('th', { text: 'Knots', attrs: { scope: 'col' } }));
+    headRow.appendChild(createEl('th', { text: 'Min', attrs: { scope: 'col' } }));
+    headRow.appendChild(createEl('th', { text: 'Mean', attrs: { scope: 'col' } }));
+    headRow.appendChild(createEl('th', { text: 'Max', attrs: { scope: 'col' } }));
+    thead.appendChild(headRow);
+    statsTable.appendChild(thead);
 
-    windContainer.innerHTML = `
-      <div class="live-wind-layout">
-        <div class="live-wind-lines">
-          <div class="live-wind-line">
-            <span class="label">Timestamp:</span>
-            <span class="live-wind-value">${ts}</span>
-          </div>
-          <div class="live-wind-line">
-            <span class="label">Wind:</span>
-            <span class="live-wind-value">${speed === 'N/A' ? 'N/A' : speed + ' knots'}</span>
-          </div>
-          <div class="live-wind-line">
-            <span class="label">Direction:</span>
-            <span class="live-wind-value">${direction} (${windFrom})</span>
-          </div>
-        </div>
-        ${statsTableHtml}
-      </div>
-    `;
+    const tbody = createEl('tbody');
+    intervalRows.forEach(interval => {
+      const row = createEl('tr');
+      row.appendChild(createEl('th', { text: `${interval} mins`, attrs: { scope: 'row' } }));
+      row.appendChild(createEl('td', { text: buildCell(interval, 'min') }));
+      row.appendChild(createEl('td', { text: buildCell(interval, 'mean') }));
+      row.appendChild(createEl('td', { text: buildCell(interval, 'max') }));
+      tbody.appendChild(row);
+    });
+    statsTable.appendChild(tbody);
+
+    const layout = createEl('div', { className: 'live-wind-layout' });
+    const lines = createEl('div', { className: 'live-wind-lines' });
+    const addLine = (labelText, valueText) => {
+      const line = createEl('div', { className: 'live-wind-line' });
+      line.appendChild(createEl('span', { className: 'label', text: labelText }));
+      line.appendChild(createEl('span', { className: 'live-wind-value', text: valueText }));
+      lines.appendChild(line);
+    };
+    addLine('Timestamp:', ts);
+    addLine('Wind:', speed === 'N/A' ? 'N/A' : `${speed} knots`);
+    addLine('Direction:', `${direction} (${windFrom})`);
+    layout.appendChild(lines);
+    layout.appendChild(statsTable);
+
+    clearElement(windContainer);
+    windContainer.appendChild(layout);
   } catch (error) {
-    windContainer.innerHTML = '<p>Error loading wind data.</p>';
+    clearElement(windContainer);
+    windContainer.appendChild(createEl('p', { text: 'Error loading wind data.' }));
     console.error('Fetch wind data error:', error);
   }
 }
@@ -322,7 +406,15 @@ async function fetchWeatherForecast() {
       }
 
       // Build weather grid as column-based layout so we can shade alternate columns
-      let weatherHtml = `<div class="forecast-grid" style="display: grid; grid-template-columns: repeat(${hours.length}, 80px); gap: 0; font-size: 0.85em;">`;
+      const grid = createEl('div', {
+        className: 'forecast-grid',
+        style: {
+          display: 'grid',
+          gridTemplateColumns: `repeat(${hours.length}, 80px)`,
+          gap: '0',
+          fontSize: '0.85em'
+        }
+      });
 
       hours.forEach(h => {
         const hourData = dayData[h];
@@ -333,17 +425,32 @@ async function fetchWeatherForecast() {
           ? Math.round(parseFloat(rainRaw))
           : 'N/A';
 
-        weatherHtml += `<div class="forecast-col" style="display:flex;flex-direction:column;align-items:center;padding:8px 6px;">`;
-        weatherHtml += `<div class="hour" style="font-weight:bold;padding-bottom:6px;">${String(h).padStart(2,'0')}:00</div>`;
-        // Forecast wind speed as plain text (no circle/arrow)
-        weatherHtml += `<div class="speed" style="padding:4px 0;">${speed}</div>`;
-        weatherHtml += `<div class="direction" style="padding:4px 0;margin-top:6px;font-size:0.85em;color:#444;">${direction}</div>`;
-        weatherHtml += `<div class="rain" style="padding:4px 0;">${rainProb}</div>`;
-        weatherHtml += `</div>`;
+        const col = createEl('div', {
+          className: 'forecast-col',
+          style: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '8px 6px'
+          }
+        });
+        col.appendChild(createEl('div', {
+          className: 'hour',
+          text: `${String(h).padStart(2, '0')}:00`,
+          style: { fontWeight: 'bold', paddingBottom: '6px' }
+        }));
+        col.appendChild(createEl('div', { className: 'speed', text: speed, style: { padding: '4px 0' } }));
+        col.appendChild(createEl('div', {
+          className: 'direction',
+          text: direction,
+          style: { padding: '4px 0', marginTop: '6px', fontSize: '0.85em', color: '#444' }
+        }));
+        col.appendChild(createEl('div', { className: 'rain', text: rainProb, style: { padding: '4px 0' } }));
+        grid.appendChild(col);
       });
 
-      weatherHtml += `</div>`; // Close grid
-      windEl.innerHTML = weatherHtml;
+      clearElement(windEl);
+      windEl.appendChild(grid);
     });
 
   } catch (error) {
@@ -367,13 +474,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const popup = document.createElement('div');
     popup.className = 'info-popup';
     
-    // Check if text contains a URL and make it clickable
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    if (urlRegex.test(text)) {
-      popup.innerHTML = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
-    } else {
-      popup.textContent = text;
-    }
+    appendTextWithLinks(popup, text);
     
     document.body.appendChild(popup);
     const rect = btn.getBoundingClientRect();
@@ -467,23 +568,23 @@ async function fetchTideData(dates = null) {
       }
       while (parts.length < 4) parts.push({ type: 'N/A', time: 'N/A', height: 'N/A' });
       
-      const tideHtml = `
-        <div class="tide-grid" style="display: grid; grid-template-columns: repeat(4, 80px); gap: 0; font-size: 0.9em;">
-          <div>${parts[0].type}</div>
-          <div>${parts[1].type}</div>
-          <div>${parts[2].type}</div>
-          <div>${parts[3].type}</div>
-          <div>${parts[0].time}</div>
-          <div>${parts[1].time}</div>
-          <div>${parts[2].time}</div>
-          <div>${parts[3].time}</div>
-          <div>${parts[0].height}</div>
-          <div>${parts[1].height}</div>
-          <div>${parts[2].height}</div>
-          <div>${parts[3].height}</div>
-        </div>
-      `;
-      el.innerHTML = tideHtml;
+      const tideGrid = createEl('div', {
+        className: 'tide-grid',
+        style: {
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 80px)',
+          gap: '0',
+          fontSize: '0.9em'
+        }
+      });
+      const tideValues = [
+        parts[0].type, parts[1].type, parts[2].type, parts[3].type,
+        parts[0].time, parts[1].time, parts[2].time, parts[3].time,
+        parts[0].height, parts[1].height, parts[2].height, parts[3].height
+      ];
+      tideValues.forEach(value => tideGrid.appendChild(createEl('div', { text: value })));
+      clearElement(el);
+      el.appendChild(tideGrid);
     });
   } catch (error) {
     console.error('Fetch tide data error:', error);
