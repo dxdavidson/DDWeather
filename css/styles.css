@@ -6,12 +6,15 @@ body {
     color: #222;
     margin: 0;
     padding: 0;
+    width: max-content;
+    min-width: 100%;
 }
 
 header, footer {
     background-color: #bb1919;
     color: white;
     padding: 1rem 2rem;
+    box-sizing: border-box;
 }
 
 header h1, footer p {
@@ -24,6 +27,7 @@ main {
     margin: 0 auto;
     background-color: white;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-sizing: border-box;
 }
 
 #forecast h2 {
