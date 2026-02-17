@@ -63,6 +63,7 @@ main {
     padding: 0.25rem 0;
     border-top: 1px dashed #eee;
     align-items: start;
+    position: relative;
 }
 
 .forecast-row:first-of-type {
@@ -76,6 +77,12 @@ main {
     white-space: nowrap;
     text-align: left;
     position: relative;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #fafafa;
+    padding-right: 0.75rem;
+    box-shadow: 6px 0 8px -6px rgba(0,0,0,0.12);
 }
 .forecast-row .tides-sublabels {
     display: grid;
