@@ -229,6 +229,7 @@ async function fetchWindData() {
       return;
     }
 
+    const units = data.units || 'knots';
     const speed = (data.windSpeed && !isNaN(parseFloat(data.windSpeed))) ? Math.round(parseFloat(data.windSpeed)) : (data.windSpeed || 'N/A');
     const direction = data.windDirection || data.wind_direction || 'N/A';
     const windFrom = data.windFrom || 'N/A';
@@ -247,7 +248,7 @@ async function fetchWindData() {
     const statsTable = createEl('table', { className: 'wind-stats-table', attrs: { 'aria-label': 'Wind speed stats' } });
     const thead = createEl('thead');
     const headRow = createEl('tr');
-    headRow.appendChild(createEl('th', { text: 'Knots', attrs: { scope: 'col' } }));
+    headRow.appendChild(createEl('th', { text: units, attrs: { scope: 'col' } }));
     headRow.appendChild(createEl('th', { text: 'Min', attrs: { scope: 'col' } }));
     headRow.appendChild(createEl('th', { text: 'Mean', attrs: { scope: 'col' } }));
     headRow.appendChild(createEl('th', { text: 'Max', attrs: { scope: 'col' } }));
@@ -274,7 +275,7 @@ async function fetchWindData() {
       lines.appendChild(line);
     };
     addLine('Timestamp:', ts);
-    addLine('Wind:', speed === 'N/A' ? 'N/A' : `${speed} knots`);
+    addLine('Wind:', speed === 'N/A' ? 'N/A' : `${speed} ${units}`);
     addLine('Direction:', `${direction} (${windFrom})`);
     layout.appendChild(lines);
     layout.appendChild(statsTable);
