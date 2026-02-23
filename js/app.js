@@ -194,6 +194,7 @@ async function fetchSwellHeight() {
             weatherSublabels.appendChild(createEl('span', { className: 'weather-mph', text: 'mph' }));
             weatherSublabels.appendChild(createEl('span', { className: 'weather-direction', text: 'Direction' }));
             weatherSublabels.appendChild(createEl('span', { className: 'weather-rain', text: 'Rain %' }));
+            weatherSublabels.appendChild(createEl('span', { className: 'weather-temp', text: 'Temp °C' }));
             windLabel.appendChild(weatherSublabels);
             windRow.appendChild(windLabel);
             windRow.appendChild(createEl('span', { className: 'value', text: wind, attrs: { id: `wind-day-${index}` } }));
@@ -319,6 +320,7 @@ async function fetchWeatherForecast() {
       const windSpeeds = data.hourly.wind_speed_10m || data.hourly.windSpeed || data.hourly.wind_speed || [];
       const windDirections = data.hourly.wind_direction_10m || data.hourly.windDirection || data.hourly.wind_direction || [];
       const rainProbs = data.hourly.precipitation_probability || data.hourly.precipitationProbability || [];
+      const temps = data.hourly.temperature_2m || data.hourly.temperature || [];
       
       times.forEach((time, idx) => {
         const dateStr = new Date(time).toISOString().split('T')[0];
@@ -328,6 +330,7 @@ async function fetchWeatherForecast() {
           windSpeed: windSpeeds[idx] || null,
           windDirection: windDirections[idx] || null,
           rainProbability: (rainProbs[idx] ?? null),
+          temperature: (temps[idx] ?? null),
           timestamp: time
         };
       });
@@ -425,6 +428,11 @@ async function fetchWeatherForecast() {
         const rainProb = (rainRaw !== null && rainRaw !== undefined && !isNaN(parseFloat(rainRaw)))
           ? Math.round(parseFloat(rainRaw))
           : 'N/A';
+        const tempRaw = hourData ? hourData.temperature : null;
+        const tempVal = (tempRaw !== null && tempRaw !== undefined && !isNaN(parseFloat(tempRaw)))
+          ? Math.round(parseFloat(tempRaw))
+          : 'N/A';
+        const tempText = tempVal === 'N/A' ? 'N/A' : `${tempVal}°`;
 
         const col = createEl('div', {
           className: 'forecast-col',
@@ -444,9 +452,10 @@ async function fetchWeatherForecast() {
         col.appendChild(createEl('div', {
           className: 'direction',
           text: direction,
-          style: { padding: '4px 0', marginTop: '6px', fontSize: '0.85em', color: '#444' }
+          style: { padding: '4px 0', fontSize: '0.85em', color: '#444' }
         }));
         col.appendChild(createEl('div', { className: 'rain', text: rainProb, style: { padding: '4px 0' } }));
+        col.appendChild(createEl('div', { className: 'temp', text: tempText, style: { padding: '4px 0' } }));
         grid.appendChild(col);
       });
 
