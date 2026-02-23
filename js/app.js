@@ -277,7 +277,7 @@ async function fetchWindData() {
     };
     addLine('Timestamp:', ts);
     addLine('Wind:', speed === 'N/A' ? 'N/A' : `${speed} ${units}`);
-    addLine('Direction:', `${direction} (${windFrom})`);
+    addLine('Direction:', `${windFrom}`);
     layout.appendChild(lines);
     layout.appendChild(statsTable);
 
