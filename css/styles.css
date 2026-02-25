@@ -111,8 +111,9 @@ main {
     padding: 4px 0;
 }
 .forecast-row .weather-sublabels {
+    --weather-label-offset: 30px;
     display: grid;
-    grid-template-rows: auto auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto auto;
     row-gap: 0;
     margin-top: 0;
     padding-left: 48px;
@@ -130,6 +131,20 @@ main {
     font-weight: 700;
     padding-bottom: 6px;
     visibility: hidden;
+}
+.forecast-row .weather-sublabels .weather-mph,
+.forecast-row .weather-sublabels .weather-direction,
+.forecast-row .weather-sublabels .weather-rain,
+.forecast-row .weather-sublabels .weather-temp {
+    position: relative;
+    top: var(--weather-label-offset);
+}
+.forecast-row .weather-sublabels .weather-icon {
+    font-weight: 700;
+    padding-bottom: 2px;
+}
+.forecast-row .weather-icon-image {
+    display: block;
 }
 
 .forecast-row .value {

@@ -15,6 +15,52 @@ const ENDPOINTS = {
   waves: '/api/waves'
 };
 
+// Template map for Open-Meteo weather codes (edit icon filenames later as needed).
+// Keep keys as the exact weather_code values returned by the API.
+const WEATHER_CODE_ICON_MAP = {
+  0: 'slight-rain.png',  // Clear sky
+  1: 'slight-rain.png',  // Mainly clear
+  2: 'slight-rain.png',  // Partly cloudy
+  3: 'slight-rain.png',  // Overcast
+  45: 'slight-rain.png', // Fog
+  48: 'slight-rain.png', // Depositing rime fog
+  51: 'slight-rain.png', // Light drizzle
+  53: 'slight-rain.png', // Moderate drizzle
+  55: 'slight-rain.png', // Dense drizzle
+  56: 'slight-rain.png', // Light freezing drizzle
+  57: 'slight-rain.png', // Dense freezing drizzle
+  61: 'slight-rain.png', // Slight rain
+  63: 'slight-rain.png', // Moderate rain
+  65: 'slight-rain.png', // Heavy rain
+  66: 'slight-rain.png', // Light freezing rain
+  67: 'slight-rain.png', // Heavy freezing rain
+  71: 'slight-rain.png', // Slight snowfall
+  73: 'slight-rain.png', // Moderate snowfall
+  75: 'slight-rain.png', // Heavy snowfall
+  77: 'slight-rain.png', // Snow grains
+  80: 'slight-rain.png', // Slight rain showers
+  81: 'slight-rain.png', // Moderate rain showers
+  82: 'slight-rain.png', // Violent rain showers
+  85: 'slight-rain.png', // Slight snow showers
+  86: 'slight-rain.png', // Heavy snow showers
+  95: 'slight-rain.png', // Thunderstorm
+  96: 'slight-rain.png', // Thunderstorm with slight hail
+  99: 'slight-rain.png'  // Thunderstorm with heavy hail
+};
+
+// Example final map values:
+// WEATHER_CODE_ICON_MAP[0] = 'clear-sky.png';
+// WEATHER_CODE_ICON_MAP[1] = 'mainly-clear.png';
+// WEATHER_CODE_ICON_MAP[95] = 'thunderstorm.png';
+
+function getWeatherIconName(weatherCode) {
+  const code = Number(weatherCode);
+  if (Number.isInteger(code) && WEATHER_CODE_ICON_MAP[code]) {
+    return WEATHER_CODE_ICON_MAP[code];
+  }
+  return 'slight-rain.png';
+}
+
 // Convert wind direction (cardinal string or degrees) to numeric degrees
 function getDirectionDegrees(dir) {
   if (dir === null || dir === undefined) return null;
@@ -321,6 +367,7 @@ async function fetchWeatherForecast() {
       const windDirections = data.hourly.wind_direction_10m || data.hourly.windDirection || data.hourly.wind_direction || [];
       const rainProbs = data.hourly.precipitation_probability || data.hourly.precipitationProbability || [];
       const temps = data.hourly.temperature_2m || data.hourly.temperature || [];
+      const weatherCodes = data.hourly.weather_code || data.hourly.weatherCode || [];
       
       times.forEach((time, idx) => {
         const dateStr = new Date(time).toISOString().split('T')[0];
@@ -331,6 +378,7 @@ async function fetchWeatherForecast() {
           windDirection: windDirections[idx] || null,
           rainProbability: (rainProbs[idx] ?? null),
           temperature: (temps[idx] ?? null),
+          weatherCode: (weatherCodes[idx] ?? null),
           timestamp: time
         };
       });
@@ -364,6 +412,7 @@ async function fetchWeatherForecast() {
           windSpeed: hour.windSpeed || hour.wind_speed || hour.wind || null,
           windDirection: hour.windDirection || hour.wind_direction || hour.direction || null,
           rainProbability: (hour.precipitationProbability ?? hour.precipitation_probability ?? hour.rainProbability ?? null),
+          weatherCode: (hour.weatherCode ?? hour.weather_code ?? null),
           timestamp: timeStr
         };
       });
@@ -433,6 +482,8 @@ async function fetchWeatherForecast() {
           ? Math.round(parseFloat(tempRaw))
           : 'N/A';
         const tempText = tempVal === 'N/A' ? 'N/A' : `${tempVal}°`;
+        const weatherCode = hourData ? hourData.weatherCode : null;
+        const weatherIconName = getWeatherIconName(weatherCode);
 
         const col = createEl('div', {
           className: 'forecast-col',
@@ -447,6 +498,15 @@ async function fetchWeatherForecast() {
           className: 'hour',
           text: `${String(h).padStart(2, '0')}:00`,
           style: { fontWeight: 'bold', paddingBottom: '6px' }
+        }));
+        col.appendChild(createEl('img', {
+          className: 'weather-icon-image',
+          attrs: {
+            src: `icons/${weatherIconName}`,
+            alt: 'Weather icon',
+            loading: 'lazy'
+          },
+          style: { width: '24px', height: '24px', objectFit: 'contain', marginBottom: '6px' }
         }));
         col.appendChild(createEl('div', { className: 'speed', text: speed, style: { padding: '4px 0' } }));
         col.appendChild(createEl('div', {
