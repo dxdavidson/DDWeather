@@ -21,7 +21,7 @@ const WEATHER_CODE_ICON_MAP = {
   0: 'slight-rain.png',  // Clear sky
   1: 'slight-rain.png',  // Mainly clear
   2: 'slight-rain.png',  // Partly cloudy
-  3: 'slight-rain.png',  // Overcast
+  3: 'cloud.png',  // Overcast
   45: 'slight-rain.png', // Fog
   48: 'slight-rain.png', // Depositing rime fog
   51: 'slight-rain.png', // Light drizzle
@@ -484,6 +484,9 @@ async function fetchWeatherForecast() {
         const tempText = tempVal === 'N/A' ? 'N/A' : `${tempVal}°`;
         const weatherCode = hourData ? hourData.weatherCode : null;
         const weatherIconName = getWeatherIconName(weatherCode);
+        const hourLabel = `${String(h).padStart(2, '0')}:00`;
+
+        console.debug(`[Weather display] ${date} ${hourLabel} code=${weatherCode ?? 'N/A'} icon=${weatherIconName}`);
 
         const col = createEl('div', {
           className: 'forecast-col',
@@ -496,7 +499,7 @@ async function fetchWeatherForecast() {
         });
         col.appendChild(createEl('div', {
           className: 'hour',
-          text: `${String(h).padStart(2, '0')}:00`,
+          text: hourLabel,
           style: { fontWeight: 'bold', paddingBottom: '6px' }
         }));
         col.appendChild(createEl('img', {
