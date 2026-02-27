@@ -754,6 +754,10 @@ async function fetchWeatherForecast() {
             src: `icons/weather/${iconFolder}/${weatherIconName}`,
             alt: weatherIconTooltip,
             title: weatherIconTooltip,
+            tabindex: '0',
+            role: 'button',
+            'aria-label': weatherIconTooltip,
+            'data-tooltip': weatherIconTooltip,
             loading: 'lazy'
           },
           style: { width: '24px', height: '24px', objectFit: 'contain', marginBottom: '6px' }
@@ -782,6 +786,75 @@ window.addEventListener('DOMContentLoaded', async () => {
   await fetchSwellHeight();
   await fetchWindData();
   fetchWeatherForecast();
+
+  let weatherPopup = null;
+  let weatherPopupTarget = null;
+
+  const removeWeatherPopup = () => {
+    if (weatherPopup) {
+      weatherPopup.remove();
+      weatherPopup = null;
+      weatherPopupTarget = null;
+    }
+  };
+
+  const showWeatherPopup = (target, text) => {
+    if (!target || !text) return;
+
+    if (weatherPopup && weatherPopupTarget === target) {
+      removeWeatherPopup();
+      return;
+    }
+
+    removeWeatherPopup();
+    weatherPopupTarget = target;
+    weatherPopup = document.createElement('div');
+    weatherPopup.className = 'weather-icon-popup';
+    weatherPopup.textContent = text;
+    document.body.appendChild(weatherPopup);
+
+    const rect = target.getBoundingClientRect();
+    weatherPopup.style.left = `${rect.left + window.scrollX}px`;
+    weatherPopup.style.top = `${rect.bottom + window.scrollY + 8}px`;
+  };
+
+  const getWeatherIconTooltipTarget = (eventTarget) => eventTarget && eventTarget.closest('.weather-icon-image[data-tooltip]');
+
+  document.addEventListener('click', (e) => {
+    const icon = getWeatherIconTooltipTarget(e.target);
+    if (icon) {
+      e.preventDefault();
+      showWeatherPopup(icon, icon.getAttribute('data-tooltip'));
+      return;
+    }
+
+    if (weatherPopup && !weatherPopup.contains(e.target)) {
+      removeWeatherPopup();
+    }
+  });
+
+  document.addEventListener('focusin', (e) => {
+    const icon = getWeatherIconTooltipTarget(e.target);
+    if (!icon) return;
+    showWeatherPopup(icon, icon.getAttribute('data-tooltip'));
+  });
+
+  document.addEventListener('focusout', (e) => {
+    const icon = getWeatherIconTooltipTarget(e.target);
+    if (!icon) return;
+    setTimeout(() => {
+      const active = document.activeElement;
+      if (!active || !active.closest('.weather-icon-image[data-tooltip]')) {
+        removeWeatherPopup();
+      }
+    }, 0);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      removeWeatherPopup();
+    }
+  });
   
   // Add event delegation for info buttons in the entire document
   document.addEventListener('click', (e) => {
