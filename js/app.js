@@ -17,46 +17,200 @@ const ENDPOINTS = {
 
 // Template map for Open-Meteo weather codes (edit icon filenames later as needed).
 // Keep keys as the exact weather_code values returned by the API.
+//icons from https://weather-sense.leftium.com/wmo-codes
 const WEATHER_CODE_ICON_MAP = {
-  0: 'slight-rain.png',  // Clear sky
-  1: 'slight-rain.png',  // Mainly clear
-  2: 'slight-rain.png',  // Partly cloudy
-  3: 'cloud.png',  // Overcast
-  45: 'slight-rain.png', // Fog
-  48: 'slight-rain.png', // Depositing rime fog
-  51: 'slight-rain.png', // Light drizzle
-  53: 'slight-rain.png', // Moderate drizzle
-  55: 'slight-rain.png', // Dense drizzle
-  56: 'slight-rain.png', // Light freezing drizzle
-  57: 'slight-rain.png', // Dense freezing drizzle
-  61: 'slight-rain.png', // Slight rain
-  63: 'slight-rain.png', // Moderate rain
-  65: 'slight-rain.png', // Heavy rain
-  66: 'slight-rain.png', // Light freezing rain
-  67: 'slight-rain.png', // Heavy freezing rain
-  71: 'slight-rain.png', // Slight snowfall
-  73: 'slight-rain.png', // Moderate snowfall
-  75: 'slight-rain.png', // Heavy snowfall
-  77: 'slight-rain.png', // Snow grains
-  80: 'slight-rain.png', // Slight rain showers
-  81: 'slight-rain.png', // Moderate rain showers
-  82: 'slight-rain.png', // Violent rain showers
-  85: 'slight-rain.png', // Slight snow showers
-  86: 'slight-rain.png', // Heavy snow showers
-  95: 'slight-rain.png', // Thunderstorm
-  96: 'slight-rain.png', // Thunderstorm with slight hail
-  99: 'slight-rain.png'  // Thunderstorm with heavy hail
+  0: '0_sunny.png',              // Clear sky
+  1: '1_mostly_sunny.png',       // Mainly clear
+  2: '2_partly_cloudy.png',      // Partly cloudy
+  3: '3_mostly_cloudy_day.png',  // Overcast
+  45: '45_cloudy.png',           // Fog
+  48: '48_cloudy.png',           // Depositing rime fog
+  51: '51_rain_light.png',       // Light drizzle
+  53: '53_rain_light.png',       // Moderate drizzle
+  55: '55_rain_light.png',       // Dense drizzle
+  56: '56_snow_s_rain.png',      // Light freezing drizzle
+  57: '57_snow_s_rain.png',      // Dense freezing drizzle
+  61: '61_rain.png',             // Slight rain
+  63: '63_rain_heavy.png',       // Moderate rain
+  65: '65_rain_heavy.png',       // Heavy rain
+  66: '66_rain_s_snow.png',      // Light freezing rain
+  67: '67_rain_s_snow.png',      // Heavy freezing rain
+  71: '71_snow_light.png',       // Slight snowfall
+  73: '73_snow.png',             // Moderate snowfall
+  75: '75_snow_heavy.png',       // Heavy snowfall
+  77: '77_snow_s_cloudy.png',    // Snow grains
+  80: '80_sunny_s_rain.png',     // Slight rain showers
+  81: '81_rain_s_sunny.png',     // Moderate rain showers
+  82: '82_rain_s_sunny.png',     // Violent rain showers
+  85: '85_snow_s_cloudy.png',    // Slight snow showers
+  86: '86_snow_s_cloudy.png',    // Heavy snow showers
+  95: '95_thunderstorms.png',    // Thunderstorm
+  96: '96_thunderstorms.png',    // Thunderstorm with slight hail
+  99: '99_thunderstorms.png'     // Thunderstorm with heavy hail
 };
+
+// Night icon map for Open-Meteo weather codes.
+// Keep keys aligned with WEATHER_CODE_ICON_MAP so both day and night variants are available.
+const WEATHER_CODE_ICON_MAP_NIGHT = {
+  0: '0_clear_night.png',          // Clear sky (night)
+  1: '1_mostly_clear_night.png',   // Mainly clear (night)
+  2: '2_partly_cloudy_night.png',  // Partly cloudy (night)
+  3: '3_mostly_cloudy_night.png',  // Overcast
+  45: '45_cloudy.png',             // Fog
+  48: '48_cloudy.png',             // Depositing rime fog
+  51: '51_rain_light.png',         // Light drizzle
+  53: '53_rain_light.png',         // Moderate drizzle
+  55: '55_rain_light.png',         // Dense drizzle
+  56: '56_snow_s_rain.png',        // Light freezing drizzle
+  57: '57_snow_s_rain.png',        // Dense freezing drizzle
+  61: '61_rain.png',               // Slight rain
+  63: '63_rain_heavy.png',         // Moderate rain
+  65: '65_rain_heavy.png',         // Heavy rain
+  66: '66_rain_s_snow.png',        // Light freezing rain
+  67: '67_rain_s_snow.png',        // Heavy freezing rain
+  71: '71_snow_light.png',         // Slight snowfall
+  73: '73_snow.png',               // Moderate snowfall
+  75: '75_snow_heavy.png',         // Heavy snowfall
+  77: '77_snow_s_cloudy.png',      // Snow grains
+  80: '80_cloudy_s_rain.png',      // Slight rain showers
+  81: '81_rain_s_cloudy.png',      // Moderate rain showers
+  82: '82_rain_s_cloudy.png',      // Violent rain showers
+  85: '85_snow_s_cloudy.png',      // Slight snow showers
+  86: '86_snow_s_cloudy.png',      // Heavy snow showers
+  95: '95_thunderstorms.png',      // Thunderstorm
+  96: '96_thunderstorms.png',      // Thunderstorm with slight hail
+  99: '99_thunderstorms.png'       // Thunderstorm with heavy hail
+};
+
+let sunriseSunsetByDate = {};
+
+function parseTimeToMinutes(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const str = String(value).trim();
+  if (!str) return null;
+
+  // HH:mm or HH:mm:ss
+  const hhmmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (hhmmMatch) {
+    const hours = Number(hhmmMatch[1]);
+    const minutes = Number(hhmmMatch[2]);
+    if (!Number.isNaN(hours) && !Number.isNaN(minutes)) {
+      return (hours * 60) + minutes;
+    }
+  }
+
+  // ISO timestamp or other Date-parseable format
+  const date = new Date(str);
+  if (!Number.isNaN(date.getTime())) {
+    return (date.getHours() * 60) + date.getMinutes();
+  }
+
+  return null;
+}
+
+function extractSunriseSunsetByDate(payload) {
+  const map = {};
+  if (!payload || typeof payload !== 'object') return map;
+
+  // Shape: { sunriseSunsetByDate: { 'YYYY-MM-DD': { sunrise, sunset } } }
+  const nested = payload.sunriseSunsetByDate;
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    Object.entries(nested).forEach(([dateKey, value]) => {
+      if (!value || typeof value !== 'object') return;
+      const sunrise = parseTimeToMinutes(value.sunrise);
+      const sunset = parseTimeToMinutes(value.sunset);
+      if (sunrise !== null || sunset !== null) {
+        map[dateKey] = { sunrise, sunset };
+      }
+    });
+  }
+
+  // Shape: { daily: [{ date|time, sunrise, sunset }] }
+  if (Array.isArray(payload.daily)) {
+    payload.daily.forEach(day => {
+      if (!day || typeof day !== 'object') return;
+      const dateRaw = day.date || day.time || day.datetime;
+      if (!dateRaw) return;
+      let dateKey;
+      try {
+        dateKey = new Date(dateRaw).toISOString().split('T')[0];
+      } catch (e) {
+        dateKey = String(dateRaw).split('T')[0];
+      }
+      const sunrise = parseTimeToMinutes(day.sunrise);
+      const sunset = parseTimeToMinutes(day.sunset);
+      if (sunrise !== null || sunset !== null) {
+        map[dateKey] = { sunrise, sunset };
+      }
+    });
+  }
+
+  // Shape: { daily: { time: [...], sunrise: [...], sunset: [...] } }
+  if (payload.daily && typeof payload.daily === 'object' && !Array.isArray(payload.daily)) {
+    const dailyTimes = Array.isArray(payload.daily.time) ? payload.daily.time : [];
+    const dailySunrise = Array.isArray(payload.daily.sunrise) ? payload.daily.sunrise : [];
+    const dailySunset = Array.isArray(payload.daily.sunset) ? payload.daily.sunset : [];
+
+    dailyTimes.forEach((dateRaw, idx) => {
+      if (!dateRaw) return;
+      const dateKey = String(dateRaw).split('T')[0];
+      const sunrise = parseTimeToMinutes(dailySunrise[idx]);
+      const sunset = parseTimeToMinutes(dailySunset[idx]);
+      if (sunrise !== null || sunset !== null) {
+        map[dateKey] = { sunrise, sunset };
+      }
+    });
+  }
+
+  // Shape: { sunrise: [...], sunset: [...], dates|time: [...] }
+  if (Array.isArray(payload.sunrise) && Array.isArray(payload.sunset)) {
+    const dateList = Array.isArray(payload.dates)
+      ? payload.dates
+      : (Array.isArray(payload.time) ? payload.time : []);
+    payload.sunrise.forEach((sunriseVal, idx) => {
+      const dateRaw = dateList[idx];
+      if (!dateRaw) return;
+      const dateKey = String(dateRaw).split('T')[0];
+      const sunrise = parseTimeToMinutes(sunriseVal);
+      const sunset = parseTimeToMinutes(payload.sunset[idx]);
+      if (sunrise !== null || sunset !== null) {
+        map[dateKey] = { sunrise, sunset };
+      }
+    });
+  }
+
+  return map;
+}
+
+function isNightAtHour(dateKey, hour) {
+  const fallbackNightStart = 19;
+  const fallbackDayStart = 7;
+  const daySunTimes = sunriseSunsetByDate[dateKey];
+
+  if (!daySunTimes) {
+    return hour < fallbackDayStart || hour >= fallbackNightStart;
+  }
+
+  const sunrise = daySunTimes.sunrise;
+  const sunset = daySunTimes.sunset;
+  if (sunrise === null || sunrise === undefined || sunset === null || sunset === undefined) {
+    return hour < fallbackDayStart || hour >= fallbackNightStart;
+  }
+
+  const minuteOfDay = hour * 60;
+  return minuteOfDay < sunrise || minuteOfDay >= sunset;
+}
 
 // Example final map values:
 // WEATHER_CODE_ICON_MAP[0] = 'clear-sky.png';
 // WEATHER_CODE_ICON_MAP[1] = 'mainly-clear.png';
 // WEATHER_CODE_ICON_MAP[95] = 'thunderstorm.png';
 
-function getWeatherIconName(weatherCode) {
+function getWeatherIconName(weatherCode, isNight = false) {
   const code = Number(weatherCode);
-  if (Number.isInteger(code) && WEATHER_CODE_ICON_MAP[code]) {
-    return WEATHER_CODE_ICON_MAP[code];
+  const map = isNight ? WEATHER_CODE_ICON_MAP_NIGHT : WEATHER_CODE_ICON_MAP;
+  if (Number.isInteger(code) && map[code]) {
+    return map[code];
   }
   return 'slight-rain.png';
 }
@@ -270,6 +424,15 @@ async function fetchWindData() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
 
+    const sunTimesFromWind = extractSunriseSunsetByDate(data);
+    if (Object.keys(sunTimesFromWind).length > 0) {
+      sunriseSunsetByDate = {
+        ...sunriseSunsetByDate,
+        ...sunTimesFromWind
+      };
+    }
+    console.debug('Sunrise/sunset map:', sunriseSunsetByDate);
+
     if (data.error) {
       clearElement(windContainer);
       windContainer.appendChild(createEl('p', { text: 'Error loading wind data.' }));
@@ -344,6 +507,15 @@ async function fetchWeatherForecast() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     console.debug('Weather forecast data received:', data);
+
+    const sunTimesFromForecast = extractSunriseSunsetByDate(data);
+    if (Object.keys(sunTimesFromForecast).length > 0) {
+      sunriseSunsetByDate = {
+        ...sunriseSunsetByDate,
+        ...sunTimesFromForecast
+      };
+      console.debug('Merged sunrise/sunset from forecast:', sunriseSunsetByDate);
+    }
 
     if (data.error) {
       console.error('Weather API error:', data.error);
@@ -483,10 +655,12 @@ async function fetchWeatherForecast() {
           : 'N/A';
         const tempText = tempVal === 'N/A' ? 'N/A' : `${tempVal}°`;
         const weatherCode = hourData ? hourData.weatherCode : null;
-        const weatherIconName = getWeatherIconName(weatherCode);
+        const isNight = isNightAtHour(date, h);
+        const weatherIconName = getWeatherIconName(weatherCode, isNight);
+        const iconFolder = isNight ? 'night' : 'day';
         const hourLabel = `${String(h).padStart(2, '0')}:00`;
 
-        console.debug(`[Weather display] ${date} ${hourLabel} code=${weatherCode ?? 'N/A'} icon=${weatherIconName}`);
+        console.debug(`[Weather display] ${date} ${hourLabel} code=${weatherCode ?? 'N/A'} period=${iconFolder} icon=${weatherIconName}`);
 
         const col = createEl('div', {
           className: 'forecast-col',
@@ -505,7 +679,7 @@ async function fetchWeatherForecast() {
         col.appendChild(createEl('img', {
           className: 'weather-icon-image',
           attrs: {
-            src: `icons/weather/day/${weatherIconName}`,
+            src: `icons/weather/${iconFolder}/${weatherIconName}`,
             alt: 'Weather icon',
             loading: 'lazy'
           },
@@ -533,7 +707,7 @@ async function fetchWeatherForecast() {
 
 window.addEventListener('DOMContentLoaded', async () => {
   await fetchSwellHeight();
-  fetchWindData();
+  await fetchWindData();
   fetchWeatherForecast();
   
   // Add event delegation for info buttons in the entire document
