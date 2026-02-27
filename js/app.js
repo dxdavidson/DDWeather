@@ -82,6 +82,68 @@ const WEATHER_CODE_ICON_MAP_NIGHT = {
   99: '99_thunderstorms.png'       // Thunderstorm with heavy hail
 };
 
+const WEATHER_CODE_TOOLTIP_MAP = {
+  0: 'Clear sky',
+  1: 'Mainly clear',
+  2: 'Partly cloudy',
+  3: 'Overcast',
+  45: 'Fog',
+  48: 'Depositing rime fog',
+  51: 'Light drizzle',
+  53: 'Moderate drizzle',
+  55: 'Dense drizzle',
+  56: 'Light freezing drizzle',
+  57: 'Dense freezing drizzle',
+  61: 'Slight rain',
+  63: 'Moderate rain',
+  65: 'Heavy rain',
+  66: 'Light freezing rain',
+  67: 'Heavy freezing rain',
+  71: 'Slight snowfall',
+  73: 'Moderate snowfall',
+  75: 'Heavy snowfall',
+  77: 'Snow grains',
+  80: 'Slight rain showers',
+  81: 'Moderate rain showers',
+  82: 'Violent rain showers',
+  85: 'Slight snow showers',
+  86: 'Heavy snow showers',
+  95: 'Thunderstorm',
+  96: 'Thunderstorm with slight hail',
+  99: 'Thunderstorm with heavy hail'
+};
+
+const WEATHER_CODE_TOOLTIP_MAP_NIGHT = {
+  0: 'Clear sky (night)',
+  1: 'Mainly clear (night)',
+  2: 'Partly cloudy (night)',
+  3: 'Overcast',
+  45: 'Fog',
+  48: 'Depositing rime fog',
+  51: 'Light drizzle',
+  53: 'Moderate drizzle',
+  55: 'Dense drizzle',
+  56: 'Light freezing drizzle',
+  57: 'Dense freezing drizzle',
+  61: 'Slight rain',
+  63: 'Moderate rain',
+  65: 'Heavy rain',
+  66: 'Light freezing rain',
+  67: 'Heavy freezing rain',
+  71: 'Slight snowfall',
+  73: 'Moderate snowfall',
+  75: 'Heavy snowfall',
+  77: 'Snow grains',
+  80: 'Slight rain showers',
+  81: 'Moderate rain showers',
+  82: 'Violent rain showers',
+  85: 'Slight snow showers',
+  86: 'Heavy snow showers',
+  95: 'Thunderstorm',
+  96: 'Thunderstorm with slight hail',
+  99: 'Thunderstorm with heavy hail'
+};
+
 let sunriseSunsetByDate = {};
 
 function parseTimeToMinutes(value) {
@@ -213,6 +275,15 @@ function getWeatherIconName(weatherCode, isNight = false) {
     return map[code];
   }
   return 'slight-rain.png';
+}
+
+function getWeatherIconTooltip(weatherCode, isNight = false) {
+  const code = Number(weatherCode);
+  const map = isNight ? WEATHER_CODE_TOOLTIP_MAP_NIGHT : WEATHER_CODE_TOOLTIP_MAP;
+  if (Number.isInteger(code) && map[code]) {
+    return map[code];
+  }
+  return 'Weather icon';
 }
 
 // Convert wind direction (cardinal string or degrees) to numeric degrees
@@ -657,6 +728,7 @@ async function fetchWeatherForecast() {
         const weatherCode = hourData ? hourData.weatherCode : null;
         const isNight = isNightAtHour(date, h);
         const weatherIconName = getWeatherIconName(weatherCode, isNight);
+        const weatherIconTooltip = getWeatherIconTooltip(weatherCode, isNight);
         const iconFolder = isNight ? 'night' : 'day';
         const hourLabel = `${String(h).padStart(2, '0')}:00`;
 
@@ -680,7 +752,8 @@ async function fetchWeatherForecast() {
           className: 'weather-icon-image',
           attrs: {
             src: `icons/weather/${iconFolder}/${weatherIconName}`,
-            alt: 'Weather icon',
+            alt: weatherIconTooltip,
+            title: weatherIconTooltip,
             loading: 'lazy'
           },
           style: { width: '24px', height: '24px', objectFit: 'contain', marginBottom: '6px' }
