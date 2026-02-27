@@ -505,7 +505,7 @@ async function fetchWeatherForecast() {
         col.appendChild(createEl('img', {
           className: 'weather-icon-image',
           attrs: {
-            src: `icons/${weatherIconName}`,
+            src: `icons/weather/day/${weatherIconName}`,
             alt: 'Weather icon',
             loading: 'lazy'
           },
