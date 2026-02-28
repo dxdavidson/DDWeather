@@ -498,7 +498,6 @@ async function fetchSwellHeight() {
             const weatherSublabels = createEl('span', { className: 'weather-sublabels' });
             weatherSublabels.appendChild(createEl('span', { className: 'weather-spacer', text: '00:00', attrs: { 'aria-hidden': 'true' } }));
             weatherSublabels.appendChild(createEl('span', { className: 'weather-mph', text: 'mph' }));
-            weatherSublabels.appendChild(createEl('span', { className: 'weather-direction', text: 'Direction' }));
             weatherSublabels.appendChild(createEl('span', { className: 'weather-rain', text: 'Rain %' }));
             weatherSublabels.appendChild(createEl('span', { className: 'weather-temp', text: 'Temp °C' }));
             windLabel.appendChild(weatherSublabels);
@@ -584,8 +583,8 @@ async function fetchWindData() {
 
     const layout = createEl('div', { className: 'live-wind-layout' });
     const lines = createEl('div', { className: 'live-wind-lines' });
-    const addLine = (labelText, valueNodeOrText) => {
-      const line = createEl('div', { className: 'live-wind-line' });
+    const addLine = (labelText, valueNodeOrText, lineClassName = '') => {
+      const line = createEl('div', { className: `live-wind-line ${lineClassName}`.trim() });
       line.appendChild(createEl('span', { className: 'label', text: labelText }));
       if (typeof valueNodeOrText === 'string') {
         line.appendChild(createEl('span', { className: 'live-wind-value', text: valueNodeOrText }));
@@ -597,7 +596,7 @@ async function fetchWindData() {
       lines.appendChild(line);
     };
     addLine('Timestamp:', ts);
-    addLine(`${units}:`, createWindDirectionIcon(getDirectionLabel(direction), speed));
+    addLine(`${units}:`, createWindDirectionIcon(getDirectionLabel(direction), speed), 'live-wind-line--units');
     layout.appendChild(lines);
     layout.appendChild(statsTable);
 
@@ -802,12 +801,12 @@ async function fetchWeatherForecast() {
           },
           style: { width: '24px', height: '24px', objectFit: 'contain', marginBottom: '6px' }
         }));
-        col.appendChild(createEl('div', { className: 'speed', text: speed, style: { padding: '4px 0' } }));
-        col.appendChild(createEl('div', {
-          className: 'direction',
-          text: direction,
-          style: { padding: '4px 0', fontSize: '0.85em', color: '#444' }
-        }));
+        const forecastWindWrap = createEl('div', {
+          className: 'forecast-wind-icon-wrap',
+          style: { padding: '4px 0' }
+        });
+        forecastWindWrap.appendChild(createWindDirectionIcon(direction, speed));
+        col.appendChild(forecastWindWrap);
         col.appendChild(createEl('div', { className: 'rain', text: rainProb, style: { padding: '4px 0' } }));
         col.appendChild(createEl('div', { className: 'temp', text: tempText, style: { padding: '4px 0' } }));
         grid.appendChild(col);
