@@ -234,6 +234,21 @@ main {
     text-align: left;
     color: #222;
 }
+#wind-data .live-wind-value--icon {
+    display: inline-flex;
+    align-items: center;
+}
+#wind-data .wind-direction-icon {
+    width: 44px;
+    height: 44px;
+    display: block;
+}
+#wind-data .wind-direction-icon .wind-direction-speed {
+    fill: #111;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: Arial, Helvetica, sans-serif;
+}
 #wind-data .wind-stats-table {
     border-collapse: collapse;
     font-size: 0.9rem;

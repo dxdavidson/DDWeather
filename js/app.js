@@ -309,6 +309,41 @@ function getDirectionLabel(dir) {
   return labels[idx];
 }
 
+function createWindDirectionIcon(directionLabel, speedValue) {
+  if (!directionLabel || directionLabel === 'N/A') {
+    return createEl('span', { className: 'live-wind-value', text: 'N/A' });
+  }
+
+  const svgNs = 'http://www.w3.org/2000/svg';
+  const xlinkNs = 'http://www.w3.org/1999/xlink';
+  const symbolRef = `icons/windDirections.svg#wr-icon-wind-direction--${directionLabel}`;
+
+  const icon = document.createElementNS(svgNs, 'svg');
+  icon.setAttribute('class', 'wind-direction-icon');
+  icon.setAttribute('viewBox', '0 0 32 32');
+  icon.setAttribute('aria-label', `Wind direction ${directionLabel}`);
+  icon.setAttribute('role', 'img');
+
+  const useEl = document.createElementNS(svgNs, 'use');
+  useEl.setAttribute('href', symbolRef);
+  useEl.setAttributeNS(xlinkNs, 'xlink:href', symbolRef);
+
+  icon.appendChild(useEl);
+
+  if (speedValue !== null && speedValue !== undefined && speedValue !== 'N/A') {
+    const speedText = document.createElementNS(svgNs, 'text');
+    speedText.setAttribute('x', '16');
+    speedText.setAttribute('y', '16.5');
+    speedText.setAttribute('text-anchor', 'middle');
+    speedText.setAttribute('dominant-baseline', 'middle');
+    speedText.setAttribute('class', 'wind-direction-speed');
+    speedText.textContent = String(speedValue);
+    icon.appendChild(speedText);
+  }
+
+  return icon;
+}
+
 const clearElement = (element) => {
   while (element.firstChild) {
     element.removeChild(element.firstChild);
@@ -512,7 +547,7 @@ async function fetchWindData() {
 
     const units = data.units || 'knots';
     const speed = (data.windSpeed && !isNaN(parseFloat(data.windSpeed))) ? Math.round(parseFloat(data.windSpeed)) : (data.windSpeed || 'N/A');
-    const direction = data.windDirection || data.wind_direction || 'N/A';
+    const direction = data.windDirection || data.wind_direction || data.windFrom || 'N/A';
     const windFrom = data.windFrom || 'N/A';
     const ts = data.latestTimestamp || data.timestamp || 'N/A';
 
@@ -549,15 +584,20 @@ async function fetchWindData() {
 
     const layout = createEl('div', { className: 'live-wind-layout' });
     const lines = createEl('div', { className: 'live-wind-lines' });
-    const addLine = (labelText, valueText) => {
+    const addLine = (labelText, valueNodeOrText) => {
       const line = createEl('div', { className: 'live-wind-line' });
       line.appendChild(createEl('span', { className: 'label', text: labelText }));
-      line.appendChild(createEl('span', { className: 'live-wind-value', text: valueText }));
+      if (typeof valueNodeOrText === 'string') {
+        line.appendChild(createEl('span', { className: 'live-wind-value', text: valueNodeOrText }));
+      } else {
+        const valueWrap = createEl('span', { className: 'live-wind-value live-wind-value--icon' });
+        valueWrap.appendChild(valueNodeOrText);
+        line.appendChild(valueWrap);
+      }
       lines.appendChild(line);
     };
     addLine('Timestamp:', ts);
-    addLine('Wind:', speed === 'N/A' ? 'N/A' : `${speed} ${units}`);
-    addLine('Direction:', `${windFrom}`);
+    addLine(`${units}:`, createWindDirectionIcon(getDirectionLabel(direction), speed));
     layout.appendChild(lines);
     layout.appendChild(statsTable);
 
@@ -732,7 +772,7 @@ async function fetchWeatherForecast() {
         const iconFolder = isNight ? 'night' : 'day';
         const hourLabel = `${String(h).padStart(2, '0')}:00`;
 
-        console.debug(`[Weather display] ${date} ${hourLabel} code=${weatherCode ?? 'N/A'} period=${iconFolder} icon=${weatherIconName}`);
+        //console.debug(`[Weather display] ${date} ${hourLabel} code=${weatherCode ?? 'N/A'} period=${iconFolder} icon=${weatherIconName}`);
 
         const col = createEl('div', {
           className: 'forecast-col',

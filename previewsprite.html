@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wind Direction Sprite Preview</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f4f4;
+      color: #222;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 1.5rem;
+    }
+
+    p {
+      margin: 0 0 20px 0;
+      color: #555;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      max-width: 980px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .icon {
+      width: 32px;
+      height: 32px;
+      display: block;
+    }
+
+    .label {
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .id {
+      font-size: 0.78rem;
+      color: #666;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <h1>Wind Direction Sprite Preview</h1>
+  <p>Previewing symbols from <strong>icons/windDirections.svg</strong>.</p>
+
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const grid = document.getElementById('grid');
+
+    directions.forEach(dir => {
+      const symbolId = `wr-icon-wind-direction--${dir}`;
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      icon.setAttribute('class', 'icon');
+      icon.setAttribute('viewBox', '0 0 32 32');
+      icon.setAttribute('role', 'img');
+      icon.setAttribute('aria-label', `Wind direction ${dir}`);
+
+      const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', `icons/windDirections.svg#${symbolId}`);
+      icon.appendChild(use);
+
+      const textWrap = document.createElement('div');
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = dir;
+
+      const id = document.createElement('div');
+      id.className = 'id';
+      id.textContent = symbolId;
+
+      textWrap.appendChild(label);
+      textWrap.appendChild(id);
+
+      card.appendChild(icon);
+      card.appendChild(textWrap);
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>
