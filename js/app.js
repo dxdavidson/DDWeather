@@ -799,7 +799,7 @@ async function fetchWeatherForecast() {
             'data-tooltip': weatherIconTooltip,
             loading: 'lazy'
           },
-          style: { width: '24px', height: '24px', objectFit: 'contain', marginBottom: '6px' }
+          style: { width: '28px', height: '28px', objectFit: 'contain', marginBottom: '6px' }
         }));
         const forecastWindWrap = createEl('div', {
           className: 'forecast-wind-icon-wrap',
