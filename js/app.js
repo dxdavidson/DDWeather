@@ -514,7 +514,7 @@ async function fetchSwellHeight() {
             windLabel.appendChild(createEl('strong', { text: 'Weather:' }));
             const weatherSublabels = createEl('span', { className: 'weather-sublabels' });
             weatherSublabels.appendChild(createEl('span', { className: 'weather-spacer', text: '00:00', attrs: { 'aria-hidden': 'true' } }));
-            weatherSublabels.appendChild(createEl('span', { className: 'weather-mph', text: 'mph' }));
+            weatherSublabels.appendChild(createEl('span', { className: 'weather-mph', text: 'Wind mph' }));
             weatherSublabels.appendChild(createEl('span', { className: 'weather-rain', text: 'Rain %' }));
             weatherSublabels.appendChild(createEl('span', { className: 'weather-temp', text: 'Temp °C' }));
             windLabel.appendChild(weatherSublabels);
