@@ -309,14 +309,14 @@ function getDirectionLabel(dir) {
   return labels[idx];
 }
 
-function createWindDirectionIcon(directionLabel, speedValue) {
+function createWindDirectionIcon(directionLabel, speedValue, spritePath = 'icons/windDirections.svg') {
   if (!directionLabel || directionLabel === 'N/A') {
     return createEl('span', { className: 'live-wind-value', text: 'N/A' });
   }
 
   const svgNs = 'http://www.w3.org/2000/svg';
   const xlinkNs = 'http://www.w3.org/1999/xlink';
-  const symbolRef = `icons/windDirections.svg#wr-icon-wind-direction--${directionLabel}`;
+  const symbolRef = `${spritePath}#wr-icon-wind-direction--${directionLabel}`;
 
   const icon = document.createElementNS(svgNs, 'svg');
   icon.setAttribute('class', 'wind-direction-icon');
@@ -403,23 +403,35 @@ async function fetchSwellHeight() {
 
         // Extract swell height data for today and next 7 days
         const swellHeights = data.daily.wave_height_max;
+    const waveDirections = data.daily.wave_direction_dominant || [];
         const times = data.daily.time;
 
-        // Group swell heights by day
+    // Group swell heights and dominant directions by day
         const dailySwell = {};
         times.forEach((time, index) => {
             const date = time.split('T')[0];
             if (!dailySwell[date]) {
-                dailySwell[date] = [];
+        dailySwell[date] = {
+          heights: [],
+          directions: []
+        };
             }
-            dailySwell[date].push(swellHeights[index]);
+      dailySwell[date].heights.push(swellHeights[index]);
+      dailySwell[date].directions.push(waveDirections[index]);
         });
 
-        // Calculate average swell height per day
-        const avgDailySwell = Object.entries(dailySwell).map(([date, heights]) => {
-            const sum = heights.reduce((a, b) => a + b, 0);
-            const avg = sum / heights.length;
-            return { date, avg: avg.toFixed(2) };
+    // Calculate average swell height per day and keep one dominant direction label
+    const avgDailySwell = Object.entries(dailySwell).map(([date, dayData]) => {
+      const heights = dayData.heights.filter(h => h !== null && h !== undefined && !Number.isNaN(Number(h)));
+      const sum = heights.reduce((acc, height) => acc + Number(height), 0);
+      const avg = heights.length ? (sum / heights.length) : null;
+      const dominantDirectionRaw = dayData.directions.find(d => d !== null && d !== undefined && d !== '');
+      const dominantDirectionLabel = getDirectionLabel(dominantDirectionRaw);
+      return {
+        date,
+        avg: avg !== null ? avg.toFixed(2) : 'N/A',
+        directionLabel: dominantDirectionLabel
+      };
         });
 
         // Display forecast for today and next 7 days — each day has Waves, Tides, Wind rows
@@ -436,7 +448,7 @@ async function fetchSwellHeight() {
                 label = `${weekday} ${dateStr}`;
             }
 
-            const waves = `${day.avg} m`;
+            const waveHeightText = day.avg;
             const tides = 'Loading...'; // Will be populated by fetchTideData
             const wind = 'Loading...';  // Will be populated by fetchWeatherForecast
 
@@ -450,14 +462,19 @@ async function fetchSwellHeight() {
               text: 'i',
               attrs: {
                 type: 'button',
-                'data-info': 'Waves: Maximum wave forecast for this day from marine-api.open-meteo.com.'
+                'data-info': 'Waves: Maximum wave height and dominant wave direction forecast for this day from marine-api.open-meteo.com.'
               }
             });
             wavesLabel.appendChild(wavesBtn);
             wavesLabel.appendChild(document.createTextNode(' '));
             wavesLabel.appendChild(createEl('strong', { text: 'Waves:' }));
+            const wavesSublabels = createEl('span', { className: 'waves-sublabels' });
+            wavesSublabels.appendChild(createEl('span', { className: 'waves-metres', text: 'metres' }));
+            wavesLabel.appendChild(wavesSublabels);
             wavesRow.appendChild(wavesLabel);
-            wavesRow.appendChild(createEl('span', { className: 'value', text: waves }));
+            const wavesValue = createEl('span', { className: 'value waves-direction-icon-wrap' });
+            wavesValue.appendChild(createWindDirectionIcon(day.directionLabel, waveHeightText, 'icons/waveDirections.svg'));
+            wavesRow.appendChild(wavesValue);
             dayEl.appendChild(wavesRow);
 
             const tidesRow = createEl('div', { className: 'forecast-row tides-row' });

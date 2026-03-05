@@ -110,6 +110,19 @@ main {
 .forecast-row .tides-sublabels .tides-metres {
     padding: 4px 0;
 }
+.forecast-row .waves-sublabels {
+    display: block;
+    margin-top: 6px;
+    padding-left: 48px;
+    transform: translateY(-2px);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #555;
+    pointer-events: none;
+}
+.forecast-row .waves-sublabels .waves-metres {
+    line-height: 1.2;
+}
 .forecast-row .weather-sublabels {
     --weather-label-offset: 50px;
     display: grid;
@@ -163,6 +176,24 @@ main {
     font-size: 0.95rem;
     font-weight: 400;
     line-height: 1.2;
+}
+
+.forecast-row .waves-direction-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+}
+
+.forecast-row .waves-direction-icon-wrap .wind-direction-icon {
+    width: 53px;
+    height: 53px;
+    display: block;
+}
+
+.forecast-row .waves-direction-icon-wrap .wind-direction-icon .wind-direction-speed {
+    fill: #0074d9;
+    font-size: 9.13px;
+    font-weight: 700;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 /* Info button and popup */
@@ -247,6 +278,7 @@ main {
 #wind-data .wind-direction-icon {
     width: 44px;
     height: 44px;
+    color: #111;
     display: block;
 }
 #wind-data .wind-direction-icon .wind-direction-speed {
@@ -301,7 +333,18 @@ main {
 .forecast-grid .wind-direction-icon {
     width: 44px;
     height: 44px;
+    color: #111;
     display: block;
+}
+
+.forecast-row .waves-direction-icon-wrap .wind-direction-icon {
+    color: #0074d9;
+}
+
+.forecast-row .waves-direction-icon-wrap .wind-direction-icon use {
+    color: #0074d9;
+    fill: #0074d9;
+    stroke: #0074d9;
 }
 .forecast-grid .wind-direction-icon .wind-direction-speed {
     fill: #111;
