@@ -563,6 +563,7 @@ async function fetchWindData() {
 
     const units = data.units || 'knots';
     const speed = (data.windSpeed && !isNaN(parseFloat(data.windSpeed))) ? Math.round(parseFloat(data.windSpeed)) : (data.windSpeed || 'N/A');
+    const trend = (data.trend !== undefined && data.trend !== null && data.trend !== '') ? String(data.trend) : 'N/A';
     const direction = data.windDirection || data.wind_direction || data.windFrom || 'N/A';
     const windFrom = data.windFrom || 'N/A';
     const ts = data.latestTimestamp || data.timestamp || 'N/A';
@@ -614,6 +615,7 @@ async function fetchWindData() {
     };
     addLine('Timestamp:', ts);
     addLine(`${units}:`, createWindDirectionIcon(getDirectionLabel(direction), speed), 'live-wind-line--units');
+    addLine('Trend:', trend);
     layout.appendChild(lines);
     layout.appendChild(statsTable);
 
