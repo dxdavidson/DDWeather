@@ -1,0 +1,2 @@
+# Ignore ZIP archives in repository root only
+/*.zip
