@@ -570,6 +570,10 @@ async function fetchWebcamData() {
             loading: 'lazy'
           }
         }));
+        button.appendChild(createEl('span', {
+          className: 'webcam-thumbnail-caption',
+          text: tooltipText
+        }));
         imagesWrap.appendChild(button);
       });
 
