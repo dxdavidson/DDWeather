@@ -1050,6 +1050,26 @@ async function initializeApp() {
   let weatherPopupTarget = null;
   let webcamModal = null;
 
+  const positionPopup = (popup, targetRect) => {
+    if (!popup || !targetRect) return;
+
+    const gutter = 8;
+    const viewportLeft = window.scrollX + gutter;
+    const viewportRight = window.scrollX + window.innerWidth - gutter;
+    const popupWidth = popup.offsetWidth;
+
+    let left = targetRect.left + window.scrollX;
+    if (left + popupWidth > viewportRight) {
+      left = viewportLeft;
+    }
+    if (left < viewportLeft) {
+      left = viewportLeft;
+    }
+
+    popup.style.left = `${left}px`;
+    popup.style.top = `${targetRect.bottom + window.scrollY + 8}px`;
+  };
+
   const removeWebcamModal = () => {
     if (webcamModal) {
       webcamModal.remove();
@@ -1123,8 +1143,7 @@ async function initializeApp() {
     document.body.appendChild(weatherPopup);
 
     const rect = target.getBoundingClientRect();
-    weatherPopup.style.left = `${rect.left + window.scrollX}px`;
-    weatherPopup.style.top = `${rect.bottom + window.scrollY + 8}px`;
+    positionPopup(weatherPopup, rect);
   };
 
   const getWeatherIconTooltipTarget = (eventTarget) => eventTarget && eventTarget.closest('.weather-icon-image[data-tooltip]');
@@ -1188,8 +1207,7 @@ async function initializeApp() {
     
     document.body.appendChild(popup);
     const rect = btn.getBoundingClientRect();
-    popup.style.left = `${rect.left + window.scrollX}px`;
-    popup.style.top = `${rect.bottom + window.scrollY + 8}px`;
+    positionPopup(popup, rect);
     // Remove popup when clicking elsewhere
     const onDocClick = (ev) => {
       if (!popup.contains(ev.target) && ev.target !== btn) {
