@@ -1025,7 +1025,12 @@ async function fetchWeatherForecast() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
+let appInitialized = false;
+
+async function initializeApp() {
+  if (appInitialized) return;
+  appInitialized = true;
+
   await fetchSwellHeight();
   await fetchWindData();
   await fetchWebcamData();
@@ -1185,7 +1190,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Delay adding doc click to avoid immediate removal from same click
     setTimeout(() => document.addEventListener('click', onDocClick), 0);
   });
-});
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initializeApp, { once: true });
+} else {
+  initializeApp();
+}
 // Fetch data on page load
 // Note: `fetchSwellHeight` will call `fetchTideData` after rendering the forecast days.
 
