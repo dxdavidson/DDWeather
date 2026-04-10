@@ -1054,11 +1054,14 @@ async function initializeApp() {
     if (!popup || !targetRect) return;
 
     const gutter = 8;
-    const viewportLeft = window.scrollX + gutter;
-    const viewportRight = window.scrollX + window.innerWidth - gutter;
+    const viewportLeft = gutter;
+    const viewportRight = window.innerWidth - gutter;
+    const viewportTop = gutter;
+    const viewportBottom = window.innerHeight - gutter;
     const popupWidth = popup.offsetWidth;
+    const popupHeight = popup.offsetHeight;
 
-    let left = targetRect.left + window.scrollX;
+    let left = targetRect.left;
     if (left + popupWidth > viewportRight) {
       left = viewportLeft;
     }
@@ -1066,8 +1069,16 @@ async function initializeApp() {
       left = viewportLeft;
     }
 
+    let top = targetRect.bottom + 8;
+    if (top + popupHeight > viewportBottom) {
+      top = targetRect.top - popupHeight - 8;
+    }
+    if (top < viewportTop) {
+      top = viewportTop;
+    }
+
     popup.style.left = `${left}px`;
-    popup.style.top = `${targetRect.bottom + window.scrollY + 8}px`;
+    popup.style.top = `${top}px`;
   };
 
   const removeWebcamModal = () => {
