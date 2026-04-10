@@ -12,7 +12,8 @@ const ENDPOINTS = {
   livewind: '/api/livewind',
   weatherforecast: '/api/weatherforecast',
   tides: '/api/tides',
-  waves: '/api/waves'
+  waves: '/api/waves',
+  webcam: '/api/webcam'
 };
 
 // Template map for Open-Meteo weather codes (edit icon filenames later as needed).
@@ -393,6 +394,170 @@ const appendTextWithLinks = (container, text) => {
     container.appendChild(document.createTextNode(str.slice(lastIndex)));
   }
 };
+
+function removeWebcamSection() {
+  const section = document.getElementById('webcam');
+  if (section) {
+    section.remove();
+  }
+}
+
+function getOrCreateWebcamSection() {
+  let section = document.getElementById('webcam');
+  if (section) return section;
+
+  const forecastSection = document.getElementById('forecast');
+  if (!forecastSection || !forecastSection.parentNode) return null;
+
+  section = createEl('section', { attrs: { id: 'webcam' } });
+  const heading = createEl('h2');
+  heading.appendChild(createEl('button', {
+    className: 'info-btn',
+    text: 'i',
+    attrs: {
+      type: 'button',
+      'data-info': 'Latest Webcam images from http://88.97.23.70/default.html'
+    }
+  }));
+  heading.appendChild(document.createTextNode(' Webcam'));
+  section.appendChild(heading);
+  section.appendChild(createEl('div', { attrs: { id: 'webcam-data' } }));
+
+  forecastSection.parentNode.insertBefore(section, forecastSection);
+  return section;
+}
+
+function resolveWebcamImageUrl(value, baseUrl) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('data:image/')) return trimmed;
+
+  try {
+    return new URL(trimmed, baseUrl).toString();
+  } catch (error) {
+    return null;
+  }
+}
+
+function extractWebcamImages(payload, baseUrl) {
+  const urls = [];
+  const seen = new Set();
+  const imageFieldNames = ['url', 'src', 'href', 'image', 'imageUrl', 'image_url', 'path', 'file'];
+  const imageListFieldNames = ['images', 'imageUrls', 'image_urls', 'webcamImages', 'snapshots', 'photos', 'frames'];
+  const imagePattern = /\.(jpg|jpeg|png|gif|webp|bmp)(\?.*)?$/i;
+
+  const addCandidate = (value) => {
+    const resolved = resolveWebcamImageUrl(value, baseUrl);
+    if (!resolved) return;
+    if (!resolved.startsWith('data:image/') && !imagePattern.test(resolved)) return;
+    if (seen.has(resolved)) return;
+    seen.add(resolved);
+    urls.push(resolved);
+  };
+
+  const visit = (value, depth = 0) => {
+    if (depth > 3 || value === null || value === undefined) return;
+
+    if (typeof value === 'string') {
+      addCandidate(value);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => visit(item, depth + 1));
+      return;
+    }
+
+    if (typeof value !== 'object') return;
+
+    imageFieldNames.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        visit(value[key], depth + 1);
+      }
+    });
+
+    imageListFieldNames.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        visit(value[key], depth + 1);
+      }
+    });
+
+    Object.entries(value).forEach(([key, nestedValue]) => {
+      if (imageFieldNames.includes(key) || imageListFieldNames.includes(key)) return;
+      if (/image|img|photo|frame|snapshot/i.test(key)) {
+        visit(nestedValue, depth + 1);
+      }
+    });
+  };
+
+  visit(payload);
+  return urls;
+}
+
+async function fetchWebcamData() {
+  try {
+    const WEBCAM_API_URL = API_BASE_URL + ENDPOINTS.webcam;
+    console.debug('Using webcam API:', WEBCAM_API_URL);
+    const response = await fetch(WEBCAM_API_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+
+    if (data.error || String(data.status || '').trim() !== 'Active') {
+      removeWebcamSection();
+      return;
+    }
+
+    const section = getOrCreateWebcamSection();
+    if (!section) return;
+
+    const webcamContainer = section.querySelector('#webcam-data');
+    if (!webcamContainer) return;
+
+    const lines = createEl('div', { className: 'live-wind-lines' });
+    const line = createEl('div', { className: 'live-wind-line' });
+    line.appendChild(createEl('span', { className: 'label', text: 'Timestamp:' }));
+    line.appendChild(createEl('span', { className: 'live-wind-value', text: data.lastupdated || 'N/A' }));
+    lines.appendChild(line);
+
+    const imageUrls = extractWebcamImages(data, response.url);
+    if (imageUrls.length > 0) {
+      const imagesLine = createEl('div', { className: 'live-wind-line webcam-images-line' });
+      imagesLine.appendChild(createEl('span', { className: 'label', text: 'Images:' }));
+
+      const imagesWrap = createEl('div', { className: 'webcam-thumbnails', attrs: { 'aria-label': 'Webcam images' } });
+      imageUrls.forEach((imageUrl, index) => {
+        const button = createEl('button', {
+          className: 'webcam-thumbnail-button',
+          attrs: {
+            type: 'button',
+            'data-webcam-fullsrc': imageUrl,
+            'data-webcam-alt': `Webcam image ${index + 1}`,
+            'aria-label': `Open larger webcam image ${index + 1}`
+          }
+        });
+        button.appendChild(createEl('img', {
+          className: 'webcam-thumbnail-image',
+          attrs: {
+            src: imageUrl,
+            alt: `Webcam image ${index + 1}`,
+            loading: 'lazy'
+          }
+        }));
+        imagesWrap.appendChild(button);
+      });
+
+      imagesLine.appendChild(imagesWrap);
+      lines.appendChild(imagesLine);
+    }
+
+    clearElement(webcamContainer);
+    webcamContainer.appendChild(lines);
+  } catch (error) {
+    removeWebcamSection();
+    console.error('Fetch webcam data error:', error);
+  }
+}
 
 async function fetchSwellHeight() {
     const forecastContainer = document.getElementById('forecast-data');
@@ -843,10 +1008,61 @@ async function fetchWeatherForecast() {
 window.addEventListener('DOMContentLoaded', async () => {
   await fetchSwellHeight();
   await fetchWindData();
+  await fetchWebcamData();
   fetchWeatherForecast();
 
   let weatherPopup = null;
   let weatherPopupTarget = null;
+  let webcamModal = null;
+
+  const removeWebcamModal = () => {
+    if (webcamModal) {
+      webcamModal.remove();
+      webcamModal = null;
+    }
+  };
+
+  const showWebcamModal = (src, altText) => {
+    if (!src) return;
+    removeWebcamModal();
+
+    webcamModal = createEl('div', {
+      className: 'webcam-modal',
+      attrs: {
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-label': altText || 'Webcam image preview'
+      }
+    });
+
+    const content = createEl('div', { className: 'webcam-modal-content' });
+    const image = createEl('img', {
+      className: 'webcam-modal-image',
+      attrs: {
+        src,
+        alt: altText || 'Webcam image preview'
+      }
+    });
+    const closeButton = createEl('button', {
+      className: 'webcam-modal-close',
+      text: 'Close',
+      attrs: {
+        type: 'button',
+        'aria-label': 'Close webcam image preview'
+      }
+    });
+
+    closeButton.addEventListener('click', removeWebcamModal);
+    content.appendChild(closeButton);
+    content.appendChild(image);
+    webcamModal.appendChild(content);
+    webcamModal.addEventListener('click', (event) => {
+      if (event.target === webcamModal) {
+        removeWebcamModal();
+      }
+    });
+    document.body.appendChild(webcamModal);
+  };
 
   const removeWeatherPopup = () => {
     if (weatherPopup) {
@@ -879,6 +1095,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   const getWeatherIconTooltipTarget = (eventTarget) => eventTarget && eventTarget.closest('.weather-icon-image[data-tooltip]');
 
   document.addEventListener('click', (e) => {
+    const webcamButton = e.target.closest('.webcam-thumbnail-button[data-webcam-fullsrc]');
+    if (webcamButton) {
+      e.preventDefault();
+      showWebcamModal(webcamButton.getAttribute('data-webcam-fullsrc'), webcamButton.getAttribute('data-webcam-alt'));
+      return;
+    }
+
     const icon = getWeatherIconTooltipTarget(e.target);
     if (icon) {
       e.preventDefault();
@@ -911,6 +1134,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       removeWeatherPopup();
+      removeWebcamModal();
     }
   });
   

@@ -30,7 +30,8 @@ main {
     box-sizing: border-box;
 }
 
-#forecast h2 {
+#forecast h2,
+#webcam h2 {
     border-bottom: 2px solid #bb1919;
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
@@ -241,12 +242,14 @@ main {
 }
 
 /* Wind section spacing */
-#wind {
+#wind,
+#webcam {
     margin-bottom: 1rem;
 }
 
 /* Live wind lines layout */
-#wind-data .live-wind-lines {
+#wind-data .live-wind-lines,
+#webcam-data .live-wind-lines {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -257,7 +260,8 @@ main {
     gap: 74px;
     flex-wrap: wrap;
 }
-#wind-data .live-wind-line {
+#wind-data .live-wind-line,
+#webcam-data .live-wind-line {
     display: grid;
     grid-template-columns: 9rem 1fr;
     gap: 1rem;
@@ -267,13 +271,87 @@ main {
     position: relative;
     top: 15px;
 }
-#wind-data .live-wind-value {
+#wind-data .live-wind-value,
+#webcam-data .live-wind-value {
     text-align: left;
     color: #222;
 }
-#wind-data .live-wind-value--icon {
+#wind-data .live-wind-value--icon,
+#webcam-data .live-wind-value--icon {
     display: inline-flex;
     align-items: center;
+}
+#webcam-data .webcam-images-line {
+    align-items: center;
+}
+#webcam-data .webcam-thumbnails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+#webcam-data .webcam-thumbnail-button {
+    padding: 0;
+    border: 1px solid #d5d5d5;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 0;
+}
+#webcam-data .webcam-thumbnail-button:hover,
+#webcam-data .webcam-thumbnail-button:focus-visible {
+    border-color: #bb1919;
+    box-shadow: 0 0 0 2px rgba(187, 25, 25, 0.15);
+    outline: none;
+}
+#webcam-data .webcam-thumbnail-image {
+    display: block;
+    width: 96px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 3px;
+}
+.webcam-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 2000;
+}
+.webcam-modal-content {
+    position: relative;
+    max-width: min(90vw, 1100px);
+    max-height: 90vh;
+    background: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+.webcam-modal-image {
+    display: block;
+    max-width: 100%;
+    max-height: calc(90vh - 60px);
+    width: auto;
+    height: auto;
+}
+.webcam-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    border: 1px solid #cfcfcf;
+    background: #fff;
+    color: #222;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.webcam-modal-close:hover,
+.webcam-modal-close:focus-visible {
+    border-color: #bb1919;
+    outline: none;
 }
 #wind-data .wind-direction-icon {
     width: 44px;
