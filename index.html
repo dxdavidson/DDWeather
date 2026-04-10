@@ -4,7 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>North Berwick</title>
-    <link rel="stylesheet" href="css/styles.css?v=20260315" />
+    <script>
+        window.ASSET_VERSION = '20260410';
+        window.withAssetVersion = function (path) {
+            return `${path}?v=${window.ASSET_VERSION}`;
+        };
+
+        const stylesheet = document.createElement('link');
+        stylesheet.rel = 'stylesheet';
+        stylesheet.href = window.withAssetVersion('css/styles.css');
+        document.head.appendChild(stylesheet);
+    </script>
 </head>
 <body>
     <header>
@@ -82,6 +92,10 @@
             }
         })();
     </script>
-    <script src="js/app.js?v=20260315"></script>
+    <script>
+        const appScript = document.createElement('script');
+        appScript.src = window.withAssetVersion('js/app.js');
+        document.body.appendChild(appScript);
+    </script>
 </body>
 </html>

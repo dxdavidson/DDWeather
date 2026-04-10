@@ -7,11 +7,13 @@ DDWeather is a lightweight weather dashboard for North Berwick. It displays:
 - Wave and tide details
 
 ## Cache-Busting Version Value
-In `index.html`, static asset URLs include a version query value:
-- `css/styles.css?v=20260305`
-- `js/app.js?v=20260305`
+The cache-busting value is set in `index.html` using the shared variable:
+- `window.ASSET_VERSION = '20260410';`
 
-The `v=20260305` part is a cache-busting value.
-Its purpose is to force browsers to download updated CSS/JS files after you deploy changes, instead of reusing older cached files.
+That value is used for both frontend assets through `window.withAssetVersion(...)`, which generates:
+- `css/styles.css?v=...`
+- `js/app.js?v=...`
 
-When you change frontend code, update this value (for example, to a new date like `20260316`) so users get the latest assets immediately.
+Its purpose is to force browsers to download updated CSS and JS files after deployment instead of reusing older cached versions.
+
+When you change frontend code, update `window.ASSET_VERSION` in `index.html` to a new value, typically a date such as `20260411`, so users get the latest assets immediately.
