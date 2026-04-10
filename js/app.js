@@ -442,6 +442,7 @@ function resolveWebcamImageUrl(value, baseUrl) {
 
 function extractWebcamImages(payload, baseUrl) {
   const images = [];
+  const images = [];
   const seen = new Set();
   const imageFieldNames = ['url', 'src', 'href', 'image', 'imageUrl', 'image_url', 'path', 'file'];
   const imageListFieldNames = ['images', 'imageUrls', 'image_urls', 'webcamImages', 'snapshots', 'photos', 'frames'];
