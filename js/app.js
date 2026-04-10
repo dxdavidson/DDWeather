@@ -441,19 +441,30 @@ function resolveWebcamImageUrl(value, baseUrl) {
 }
 
 function extractWebcamImages(payload, baseUrl) {
-  const urls = [];
+  const images = [];
   const seen = new Set();
   const imageFieldNames = ['url', 'src', 'href', 'image', 'imageUrl', 'image_url', 'path', 'file'];
   const imageListFieldNames = ['images', 'imageUrls', 'image_urls', 'webcamImages', 'snapshots', 'photos', 'frames'];
+  const descriptionFieldNames = ['description', 'desc', 'caption', 'title', 'label', 'alt', 'name'];
   const imagePattern = /\.(jpg|jpeg|png|gif|webp|bmp)(\?.*)?$/i;
 
-  const addCandidate = (value) => {
+  const getDescription = (value) => {
+    if (!value || typeof value !== 'object') return '';
+    for (const key of descriptionFieldNames) {
+      if (typeof value[key] === 'string' && value[key].trim()) {
+        return value[key].trim();
+      }
+    }
+    return '';
+  };
+
+  const addCandidate = (value, description = '') => {
     const resolved = resolveWebcamImageUrl(value, baseUrl);
     if (!resolved) return;
     if (!resolved.startsWith('data:image/') && !imagePattern.test(resolved)) return;
     if (seen.has(resolved)) return;
     seen.add(resolved);
-    urls.push(resolved);
+    images.push({ url: resolved, description });
   };
 
   const visit = (value, depth = 0) => {
@@ -471,9 +482,15 @@ function extractWebcamImages(payload, baseUrl) {
 
     if (typeof value !== 'object') return;
 
+    const description = getDescription(value);
+
     imageFieldNames.forEach((key) => {
       if (Object.prototype.hasOwnProperty.call(value, key)) {
-        visit(value[key], depth + 1);
+        if (typeof value[key] === 'string') {
+          addCandidate(value[key], description);
+        } else {
+          visit(value[key], depth + 1);
+        }
       }
     });
 
@@ -492,7 +509,7 @@ function extractWebcamImages(payload, baseUrl) {
   };
 
   visit(payload);
-  return urls;
+  return images;
 }
 
 async function fetchWebcamData() {
@@ -520,27 +537,30 @@ async function fetchWebcamData() {
     line.appendChild(createEl('span', { className: 'live-wind-value', text: data.lastupdated || 'N/A' }));
     lines.appendChild(line);
 
-    const imageUrls = extractWebcamImages(data, response.url);
-    if (imageUrls.length > 0) {
+    const webcamImages = extractWebcamImages(data, response.url);
+    if (webcamImages.length > 0) {
       const imagesLine = createEl('div', { className: 'live-wind-line webcam-images-line' });
       imagesLine.appendChild(createEl('span', { className: 'label', text: 'Images:' }));
 
       const imagesWrap = createEl('div', { className: 'webcam-thumbnails', attrs: { 'aria-label': 'Webcam images' } });
-      imageUrls.forEach((imageUrl, index) => {
+      webcamImages.forEach((image, index) => {
+        const tooltipText = image.description || `Webcam image ${index + 1}`;
         const button = createEl('button', {
           className: 'webcam-thumbnail-button',
           attrs: {
             type: 'button',
-            'data-webcam-fullsrc': imageUrl,
-            'data-webcam-alt': `Webcam image ${index + 1}`,
-            'aria-label': `Open larger webcam image ${index + 1}`
+            'data-webcam-fullsrc': image.url,
+            'data-webcam-alt': tooltipText,
+            'aria-label': `Open larger ${tooltipText}`,
+            title: tooltipText
           }
         });
         button.appendChild(createEl('img', {
           className: 'webcam-thumbnail-image',
           attrs: {
-            src: imageUrl,
-            alt: `Webcam image ${index + 1}`,
+            src: image.url,
+            alt: tooltipText,
+            title: tooltipText,
             loading: 'lazy'
           }
         }));
