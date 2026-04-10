@@ -434,7 +434,13 @@ function resolveWebcamImageUrl(value, baseUrl) {
   if (trimmed.startsWith('data:image/')) return trimmed;
 
   try {
-    return new URL(trimmed, baseUrl).toString();
+    const resolved = new URL(trimmed, baseUrl).toString();
+    if (window.location.protocol === 'https:' && resolved.startsWith('http://')) {
+      const proxyUrl = new URL('/.netlify/functions/webcam-image', window.location.origin);
+      proxyUrl.searchParams.set('src', resolved);
+      return proxyUrl.toString();
+    }
+    return resolved;
   } catch (error) {
     return null;
   }
