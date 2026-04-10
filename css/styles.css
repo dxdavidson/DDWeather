@@ -226,7 +226,10 @@ main {
     border-radius: 4px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     max-width: min(220px, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+    overflow: auto;
     font-size: 0.9rem;
+    overflow-wrap: anywhere;
 }
 .weather-icon-popup {
     position: fixed;
@@ -237,8 +240,11 @@ main {
     border-radius: 4px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     max-width: min(220px, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+    overflow: auto;
     font-size: 0.9rem;
     line-height: 1.2;
+    overflow-wrap: anywhere;
 }
 
 /* Wind section spacing */
@@ -344,12 +350,14 @@ main {
     padding: 12px;
     border-radius: 8px;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+    overflow: auto;
 }
 .webcam-modal-image {
     display: block;
     max-width: 100%;
     max-height: calc(90vh - 60px);
-    width: auto;
+    width: 100%;
     height: auto;
 }
 .webcam-modal-close {

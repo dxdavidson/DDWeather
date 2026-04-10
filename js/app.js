@@ -1049,6 +1049,7 @@ async function initializeApp() {
   let weatherPopup = null;
   let weatherPopupTarget = null;
   let webcamModal = null;
+  let webcamModalPositionCleanup = null;
 
   const positionPopup = (popup, targetRect) => {
     if (!popup || !targetRect) return;
@@ -1060,6 +1061,12 @@ async function initializeApp() {
     const viewportBottom = window.innerHeight - gutter;
     const popupWidth = popup.offsetWidth;
     const popupHeight = popup.offsetHeight;
+
+    if (window.innerWidth <= 480) {
+      popup.style.left = `${viewportLeft}px`;
+      popup.style.top = `${viewportTop}px`;
+      return;
+    }
 
     let left = targetRect.left;
     if (left + popupWidth > viewportRight) {
@@ -1082,6 +1089,10 @@ async function initializeApp() {
   };
 
   const removeWebcamModal = () => {
+    if (webcamModalPositionCleanup) {
+      webcamModalPositionCleanup();
+      webcamModalPositionCleanup = null;
+    }
     if (webcamModal) {
       webcamModal.remove();
       webcamModal = null;
@@ -1102,6 +1113,33 @@ async function initializeApp() {
     });
 
     const content = createEl('div', { className: 'webcam-modal-content' });
+
+    const positionWebcamModalContent = () => {
+      const gutter = 8;
+      const visualViewport = window.visualViewport;
+      const viewportWidth = visualViewport ? visualViewport.width : window.innerWidth;
+      const viewportHeight = visualViewport ? visualViewport.height : window.innerHeight;
+      const viewportLeft = visualViewport ? visualViewport.offsetLeft : 0;
+      const viewportTop = visualViewport ? visualViewport.offsetTop : 0;
+
+      if (viewportWidth <= 480) {
+        content.style.position = 'fixed';
+        content.style.left = `${viewportLeft + gutter}px`;
+        content.style.top = `${viewportTop + gutter}px`;
+        content.style.width = `${Math.max(220, viewportWidth - (gutter * 2))}px`;
+        content.style.maxWidth = `${Math.max(220, viewportWidth - (gutter * 2))}px`;
+        content.style.maxHeight = `${Math.max(140, viewportHeight - (gutter * 2))}px`;
+        return;
+      }
+
+      content.style.position = 'relative';
+      content.style.left = '';
+      content.style.top = '';
+      content.style.width = '';
+      content.style.maxWidth = '';
+      content.style.maxHeight = '';
+    };
+
     const image = createEl('img', {
       className: 'webcam-modal-image',
       attrs: {
@@ -1128,6 +1166,17 @@ async function initializeApp() {
       }
     });
     document.body.appendChild(webcamModal);
+
+    positionWebcamModalContent();
+    if (window.visualViewport) {
+      const handler = () => positionWebcamModalContent();
+      window.visualViewport.addEventListener('resize', handler);
+      window.visualViewport.addEventListener('scroll', handler);
+      webcamModalPositionCleanup = () => {
+        window.visualViewport.removeEventListener('resize', handler);
+        window.visualViewport.removeEventListener('scroll', handler);
+      };
+    }
   };
 
   const removeWeatherPopup = () => {
