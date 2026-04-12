@@ -434,13 +434,7 @@ function resolveWebcamImageUrl(value, baseUrl) {
   if (trimmed.startsWith('data:image/')) return trimmed;
 
   try {
-    const resolved = new URL(trimmed, baseUrl).toString();
-    if (window.location.protocol === 'https:' && resolved.startsWith('http://')) {
-      const proxyUrl = new URL('/.netlify/functions/webcam-image', window.location.origin);
-      proxyUrl.searchParams.set('src', resolved);
-      return proxyUrl.toString();
-    }
-    return resolved;
+    return new URL(trimmed, baseUrl).toString();
   } catch (error) {
     return null;
   }
@@ -464,10 +458,13 @@ function extractWebcamImages(payload, baseUrl) {
     return '';
   };
 
-  const addCandidate = (value, description = '') => {
+  const addCandidate = (value, description = '', fromExplicitImageField = false) => {
     const resolved = resolveWebcamImageUrl(value, baseUrl);
     if (!resolved) return;
-    if (!resolved.startsWith('data:image/') && !imagePattern.test(resolved)) return;
+    const isDataImage = resolved.startsWith('data:image/');
+    const isHttpImageLike = /^https?:\/\//i.test(resolved) && imagePattern.test(resolved);
+    const isAcceptedHttpSource = /^https?:\/\//i.test(resolved) && fromExplicitImageField;
+    if (!isDataImage && !isHttpImageLike && !isAcceptedHttpSource) return;
     if (seen.has(resolved)) return;
     seen.add(resolved);
     images.push({ url: resolved, description });
@@ -493,7 +490,7 @@ function extractWebcamImages(payload, baseUrl) {
     imageFieldNames.forEach((key) => {
       if (Object.prototype.hasOwnProperty.call(value, key)) {
         if (typeof value[key] === 'string') {
-          addCandidate(value[key], description);
+          addCandidate(value[key], description, true);
         } else {
           visit(value[key], depth + 1);
         }
