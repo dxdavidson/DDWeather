@@ -1288,6 +1288,38 @@ if (document.readyState === 'loading') {
 async function fetchTideData(dates = null) {
   const TIDES_API_URL = API_BASE_URL + ENDPOINTS.tides;
 
+  const extractPayloadDateKey = (value) => {
+    if (value === null || value === undefined) return '';
+    const str = String(value).trim();
+    if (!str) return '';
+    const m = str.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (m) return m[1];
+    const splitDate = str.split('T')[0];
+    return splitDate || '';
+  };
+
+  const extractPayloadTime = (value) => {
+    if (value === null || value === undefined) return 'N/A';
+    const str = String(value).trim();
+    if (!str) return 'N/A';
+
+    // Keep wall-clock time from payload; do not convert with Date/toLocaleTimeString.
+    const isoMatch = str.match(/T(\d{2}:\d{2})(?::\d{2})?/);
+    if (isoMatch) return isoMatch[1];
+
+    const hhmmss = str.match(/^(\d{1,2}:\d{2})(?::\d{2})?$/);
+    if (hhmmss) return hhmmss[1].padStart(5, '0');
+
+    return str;
+  };
+
+  const extractPayloadMinutes = (value) => {
+    const time = extractPayloadTime(value);
+    const m = time.match(/^(\d{2}):(\d{2})$/);
+    if (!m) return Number.POSITIVE_INFINITY;
+    return (Number(m[1]) * 60) + Number(m[2]);
+  };
+
   try {
     console.debug('Fetching tides from:', TIDES_API_URL);
     const response = await fetch(TIDES_API_URL);
@@ -1327,8 +1359,8 @@ async function fetchTideData(dates = null) {
     console.debug('Events collected:', events);
     const eventsByDate = {};
     events.forEach(e => {
-      let dKey;
-      try { dKey = new Date(e.time).toISOString().split('T')[0]; } catch (err) { dKey = (e.time || '').split('T')[0]; }
+      const dKey = extractPayloadDateKey(e.time);
+      if (!dKey) return;
       if (!eventsByDate[dKey]) eventsByDate[dKey] = [];
       eventsByDate[dKey].push(e);
     });
@@ -1342,14 +1374,12 @@ async function fetchTideData(dates = null) {
     dates.slice(0, 7).forEach((date, idx) => {
       const el = document.getElementById(`tides-day-${idx}`);
       if (!el) return;
-      const dayEvents = (eventsByDate[date] || []).slice().sort((a, b) => new Date(a.time) - new Date(b.time));
+      const dayEvents = (eventsByDate[date] || []).slice().sort((a, b) => extractPayloadMinutes(a.time) - extractPayloadMinutes(b.time));
 
       const parts = [];
       for (let i = 0; i < dayEvents.length && parts.length < 4; i++) {
         const ev = dayEvents[i];
-        const timeStr = (function () {
-          try { return new Date(ev.time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ev.time || 'N/A'; }
-        })();
+        const timeStr = extractPayloadTime(ev.time);
         const heightStr = (ev.height !== null && ev.height !== undefined) ? `${parseFloat(ev.height).toFixed(2)}` : 'N/A';
         let typeLabel = ev.type || '';
         if (typeLabel === 'HighWater') typeLabel = 'HW';
